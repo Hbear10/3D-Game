@@ -32,3 +32,6 @@ class plane():
             self.p2 = math.degrees( math.atan(x2[0]/(x2[1])) +1000)*(1280/(FOV))+640
         else:
             self.p2 = math.degrees(math.atan(x2[0]/(x2[1])))*(1280/(FOV))+640
+
+
+            
