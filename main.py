@@ -120,7 +120,7 @@ def raycast():
                             ray_pos[1]=int(ray_pos[1])
 
                             
-                            print((ray_pos[1]%1))
+                           # print((ray_pos[1]%1))
                         elif math.degrees(angle) == 90:
                             #print(111)
                             
@@ -137,16 +137,16 @@ def raycast():
 
                         elif math.degrees(angle) == 270:
                             distance_travelled=ray_pos[0]-int(ray_pos[0])
-                            print(distance_travelled,111)
+                            #print(distance_travelled,111)
                             ray_pos[0]=int(ray_pos[0])
 
                             ray_pos_grid[0]-=1
-                    elif ray_pos == player_pos and ray_pos[1]%1==0:#when on y grid
+                    elif ray_pos == player_pos and ray_pos[1]%1==0 and ray_pos[0]%1!=0:#when on y grid
                         if math.degrees(angle) == 0:
                             distance_travelled=1
                             ray_pos_grid[1]-= 2#when use int to get grid pos it don't work properly
                             ray_pos[1]-=1
-                            print((ray_pos[1]%1))
+                           # print((ray_pos[1]%1))
                         elif math.degrees(angle) == 90:
                             #print(111)
                             
@@ -155,7 +155,7 @@ def raycast():
 
                             ray_pos_grid[0]+=1
 
-                            print(ray_pos_grid)
+                            #print(ray_pos_grid)
                         elif math.degrees(angle) == 180:
                             distance_travelled=1
                             ray_pos_grid[1]+=1
@@ -163,11 +163,11 @@ def raycast():
 
                         elif math.degrees(angle) == 270:
                             distance_travelled=ray_pos[0]-int(ray_pos[0])
-                            print(distance_travelled,111)
+                            #print(distance_travelled,111)
                             ray_pos[0]=int(ray_pos[0])
 
                             ray_pos_grid[0]-=1
-                    elif ray_pos == player_pos and ray_pos[0]%1==0:#when on x grid
+                    elif ray_pos == player_pos and ray_pos[0]%1==0 and ray_pos[1]%1!=0:#when on x grid
                         if math.degrees(angle) == 0:
                             distance_travelled=ray_pos[1]-int(ray_pos[1])
                             ray_pos_grid[1]-= 1
@@ -193,6 +193,23 @@ def raycast():
                             ray_pos[0]=int(ray_pos[0])
 
                             ray_pos_grid[0]-=2
+                    
+                    elif ray_pos == player_pos:
+                        print(122334)
+                        if math.degrees(angle)==90 or math.degrees(angle)==180:
+                            ray_pos[0] += scale_x
+                            ray_pos[1] += scale_y
+                            ray_pos_grid[0] += scale_x
+                            ray_pos_grid[1] += scale_y
+                            distance_travelled=1
+                        else:
+                            print("HUHUH")
+                            ray_pos[0] += scale_x
+                            ray_pos[1] += scale_y
+                            ray_pos_grid[0] += scale_x*2
+                            ray_pos_grid[1] += scale_y*2
+                            distance_travelled=1
+                    
                     else:
                         #print(2222222)
                         ray_pos[0] += scale_x
@@ -258,6 +275,21 @@ def raycast():
                     distance_travelled = 0
                     ray_pos,distance_travelled = smaller_point_dist(side_step_x,side_step_y,ray_pos)
 
+                elif ray_pos==player_pos and ray_pos[0]%1==0 and ray_pos[1]%1==0:
+                    if x_direction == -1:
+                        side_step_x = ray_pos[0],ray_pos[1]
+                        #print("!!!!!!!")
+                    else:
+                        side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
+                    
+                    if y_direction == -1:
+                        side_step_y = ray_pos[0],ray_pos[1]
+                        #print("!!!!!!!")
+                    else:
+                        side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+1] 
+
+                    ray_pos,distance_travelled = smaller_point_dist(side_step_x,side_step_y,ray_pos)
+                
                 else:
                     
                     if ray_pos==side_step_x:
@@ -293,8 +325,8 @@ def raycast():
 
 
                 ray_distance+=distance_travelled
-                if angle==0:
-                    print(ray_pos,ray_distance,angle)
+                #if angle==0:
+                    #print(ray_pos,ray_distance,angle)
                 #ray_pos[0] += math.sin(angle)*ray_index       #sin(theta)*n
                 #ray_pos[1] -= math.cos(angle)*ray_index       #cos(theta)*n, minus because as you go up it decreases index
 
