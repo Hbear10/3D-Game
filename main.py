@@ -15,10 +15,11 @@ map = [[1,1,1,1,1],
        [1,0,"W",1,1],
        [1,1,1,1,1]]
 
-map = [[1,1,1,1,],
-        [1,0,0,1],
-        [1,"W",1,1],
-        [1,1,1]]
+# map = [[1,1,1,1,],
+#         [1,0,0,1],
+#         [1,0,0,1],
+#         [1,"W",1,1],
+#         [1,1,1,1]]
 raycast_column_width = 1
 raycast_resolution = FOV / (1280 / raycast_column_width)
 print(raycast_resolution)
@@ -30,7 +31,7 @@ clock = pygame.time.Clock()
 running = True
 
 planes_to_draw = []
-player_pos = [1.5,2.5]
+player_pos = [2.5,5.5]
 player_angle = 0 #in degrees, gets turned into radians later
 
 
@@ -143,8 +144,8 @@ def raycast():
                     elif ray_pos == player_pos and ray_pos[1]%1==0:#when on y grid
                         if math.degrees(angle) == 0:
                             distance_travelled=1
-                            ray_pos_grid[1]-= 1
-                            ray_pos[1]=int(ray_pos[1])
+                            ray_pos_grid[1]-= 2#when use int to get grid pos it don't work properly
+                            ray_pos[1]-=1
                             print((ray_pos[1]%1))
                         elif math.degrees(angle) == 90:
                             #print(111)
@@ -191,13 +192,13 @@ def raycast():
                             #print(distance_travelled,111)
                             ray_pos[0]=int(ray_pos[0])
 
-                            ray_pos_grid[0]-=1
+                            ray_pos_grid[0]-=2
                     else:
-                        print(2222222)
+                        #print(2222222)
                         ray_pos[0] += scale_x
                         ray_pos[1] += scale_y
-                        ray_pos_grid[0] += x_direction
-                        ray_pos_grid[1] += y_direction
+                        ray_pos_grid[0] += scale_x
+                        ray_pos_grid[1] += scale_y
                         distance_travelled=1
                 #side step x is where x+=1, y is for y+=1
                 elif ray_pos==player_pos and ray_pos[0]%1!=0 and ray_pos[1]%1!=0:
@@ -221,7 +222,11 @@ def raycast():
                     ray_pos,distance_travelled = smaller_point_dist(side_step_x,side_step_y,ray_pos)
                     
                 elif ray_pos==player_pos and ray_pos[0]%1==0 and ray_pos[1]%1!=0:
-                    side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
+                    if x_direction == -1:
+                        side_step_x = ray_pos[0],ray_pos[1]
+                        #print("!!!!!!!")
+                    else:
+                        side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
                     
                     if y_direction == 1:#dwon
                         side_step_y = [ray_pos[0]-(-ray_pos[1]+math.ceil(ray_pos[1]))*scale_x,math.ceil(ray_pos[1])]
@@ -244,10 +249,10 @@ def raycast():
 
 
                     if y_direction == -1:
-                        side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+x_direction] 
-                        print("!!!!!!!")
+                        side_step_y = ray_pos[0],ray_pos[1]
+                        #print("!!!!!!!")
                     else:
-                        side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+x_direction] 
+                        side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+1] 
 
                     #print(ray_pos,side_step_x,side_step_y)
                     distance_travelled = 0
