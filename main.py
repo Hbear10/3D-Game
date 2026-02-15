@@ -50,9 +50,12 @@ brick = image("Brick.png")
 #print(brick.img_slices[5].show())
 
 
-ray_slice = brick.img_slices[5].transform((raycast_column_width,320),Image.Transform.EXTENT,[0,0,1,16]).show()
+ray_slice = brick.img_slices[5].transform((raycast_column_width,320),Image.Transform.EXTENT,[0,0,1,16])#.show()
+pygame_surface = pygame.image.fromstring(ray_slice.tobytes(),ray_slice.size,ray_slice.mode).convert()
 
-def draw_beam(x_point,distance): #literally just takes the point along the screen and draws a line based on distance away from the camera
+
+
+def draw_beam(x_point,distance,image_index): #literally just takes the point along the screen and draws a line based on distance away from the camera
     if distance > 1:
         colour_index = 1/distance
     else:
@@ -60,7 +63,12 @@ def draw_beam(x_point,distance): #literally just takes the point along the scree
 
     #ray_slice = brick.img_slices[5].transform((1,16),Image.Transform.AFFINE,[1,0,0,0,2,0]).show()
 
-    pygame.draw.rect(screen,color=(0, int(255*colour_index), int(255*colour_index) ),rect=pygame.Rect(x_point,360-(300/distance)/2,raycast_column_width,300/distance))
+
+    ray_slice = brick.img_slices[image_index].transform((raycast_column_width,int(600/distance)),Image.Transform.EXTENT,[0,0,1,16])#.show()
+    pygame_surface = pygame.image.fromstring(ray_slice.tobytes(),ray_slice.size,ray_slice.mode).convert()
+    screen.blit(pygame_surface, pygame_surface.get_rect(center = (x_point+(raycast_column_width//2), 360)))
+    
+    #pygame.draw.rect(screen,color=(0, int(255*colour_index), int(255*colour_index) ),rect=pygame.Rect(x_point,360-(300/distance)/2,raycast_column_width,300/distance))
 
 
 def smaller_point_dist(pointA,pointB,pointReference): # takes 3 points, and compares the first 2 to the third and returns the nearest point and the distance
@@ -102,7 +110,18 @@ def raycast():
         while not is_blocked:
             if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:#if there is a wall
                 is_blocked = True
-                draw_beam(count*raycast_column_width,ray_distance*math.cos(math.radians(player_angle)-angle))#function, calculate the spot along the screen and the true distance with fixed for fish bowl distortion
+                
+                image_index=0
+                if degree_angles%180==0:
+                    image_index = int((ray_pos[0]%1)/0.0625)
+                elif degree_angles%90==0:
+                    image_index = int((ray_pos[1]%1)/0.0625)
+                elif ray_pos == side_step_x:
+                    image_index = int((ray_pos[1]%1)/0.0625)
+                elif ray_pos == side_step_y:
+                    image_index = int((ray_pos[0]%1)/0.0625)
+
+                draw_beam(count*raycast_column_width,ray_distance*math.cos(math.radians(player_angle)-angle),image_index)#function, calculate the spot along the screen and the true distance with fixed for fish bowl distortion
             else:
                 
                 degree_angles = math.degrees(angle)
@@ -279,6 +298,7 @@ def draw_screen():
     screen.fill("dark grey")
     pygame.draw.rect(screen,(34,34,34), pygame.Rect(0,0,1280,360))
     raycast()
+    
     pygame.display.flip()
 
 
