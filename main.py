@@ -3,6 +3,7 @@ from PIL import Image
 import math
 import time
 #import random
+import maze
 
 from render import *
 
@@ -22,6 +23,13 @@ map = [[1,1,1,1,1],
 #         [1,"W",1,1],
 #         [1,1,1,1]]
 
+player_pos = [2.5,5.5]
+
+map,player_pos = maze.maze_generate(11)
+
+#player_pos[0]+=1.5
+#player_pos[1]+=1.5
+#print(map,player_pos)
 raycast_column_width = 2
 raycast_resolution = FOV / (1280 / raycast_column_width)
 
@@ -32,7 +40,7 @@ clock = pygame.time.Clock()
 running = True
 
 planes_to_draw = []
-player_pos = [2.5,5.5]
+
 player_angle = 0 #in degrees, gets turned into radians later
 
 
@@ -64,7 +72,7 @@ def draw_beam(x_point,distance,image_index): #literally just takes the point alo
     #ray_slice = brick.img_slices[5].transform((1,16),Image.Transform.AFFINE,[1,0,0,0,2,0]).show()
 
 
-    ray_slice = brick.img_slices[image_index].transform((raycast_column_width,int(600/distance)),Image.Transform.EXTENT,[0,0,1,16])#.show()
+    ray_slice = brick.img_slices[image_index].transform((raycast_column_width,int(450/distance)),Image.Transform.EXTENT,[0,0,1,16])#.show()
     pygame_surface = pygame.image.fromstring(ray_slice.tobytes(),ray_slice.size,ray_slice.mode).convert()
     screen.blit(pygame_surface, pygame_surface.get_rect(center = (x_point+(raycast_column_width//2), 360)))
     
@@ -81,7 +89,7 @@ def smaller_point_dist(pointA,pointB,pointReference): # takes 3 points, and comp
 
 
 def raycast():
-    t= time.time()
+    t= time.perf_counter()
 
     count = 0
     ray_pos=[1.5,2.5]
@@ -108,6 +116,8 @@ def raycast():
             x_direction= -1
 
         while not is_blocked:
+            degree_angles = math.degrees(angle)
+
             if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:#if there is a wall
                 is_blocked = True
                 
@@ -121,10 +131,8 @@ def raycast():
                 elif ray_pos == side_step_y:
                     image_index = int((ray_pos[0]%1)/0.0625)
 
-                draw_beam(count*raycast_column_width,ray_distance*math.cos(math.radians(player_angle)-angle),image_index)#function, calculate the spot along the screen and the true distance with fixed for fish bowl distortion
+                draw_beam(count*raycast_column_width,round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index)#function, calculate the spot along the screen and the true distance with fixed for fish bowl distortion
             else:
-                
-                degree_angles = math.degrees(angle)
 
                 if degree_angles%90!=0:
                     scale_x = math.tan(angle)*y_direction #sohcahtoa for how much to move when index of one
@@ -291,7 +299,7 @@ def raycast():
 
 
         count+=1
-    print(time.time()-t)
+    print(time.perf_counter()-t)
 
 
 def draw_screen():
@@ -322,14 +330,14 @@ while running:
                     player_pos[0]-=0.25
                 draw_screen()
             if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                for _ in range(45):
-                    player_angle-=2
+                for _ in range(30):
+                    player_angle-=3
                     draw_screen()
             if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                 player_angle+=90
                 draw_screen()
 
 
-    clock.tick(60)  
+    clock.tick(30)  
 
 pygame.quit()
