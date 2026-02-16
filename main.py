@@ -88,214 +88,217 @@ def smaller_point_dist(pointA,pointB,pointReference): # takes 3 points, and comp
         return pointB, distB
 
 
-def raycast():
-    t= time.perf_counter()
+def raycast_ray(count):
 
-    count = 0
-    ray_pos=[1.5,2.5]
-    while count < 1280//raycast_column_width:
-        ray_pos[0],ray_pos[1] = player_pos #index-coord: 0=x, 1=y  ,note to self that the map indexing is y,x not x,y
-        ray_pos_grid = [int(ray_pos[0]),int(ray_pos[1])] #gets the index on the map/array of the player
-        ray_distance = 0
-        is_blocked = False
+    ray_pos = [player_pos[0],player_pos[1]] #index-coord: 0=x, 1=y  ,note to self that the map indexing is y,x not x,y
+    ray_pos_grid = [int(ray_pos[0]),int(ray_pos[1])] #gets the index on the map/array of the player
+    ray_distance = 0
+    is_blocked = False
 
-        DIST = 500 #dist is a constant of distance to imaginary wall that we are casting on
-        angle = math.radians((math.degrees(math.atan((count*raycast_column_width-640) / DIST))+player_angle)%360) #math.radians((raycast_resolution*count-(FOV/2)+player_angle)%360)
-        #This uses angles with fixed pixel increments instead of fixed angle increments which removes distortion on the sides of the screen more info in the doc
+    DIST = 500 #dist is a constant of distance to imaginary wall that we are casting on
+    angle = math.radians((math.degrees(math.atan((count*raycast_column_width-640) / DIST))+player_angle)%360) #math.radians((raycast_resolution*count-(FOV/2)+player_angle)%360)
+    #This uses angles with fixed pixel increments instead of fixed angle increments which removes distortion on the sides of the screen more info in the doc
 
-        side_step_x = [0,0] #points of the ray where they move to the next grid line along the x, or y
-        side_step_y = [0,0]
+    side_step_x = [0,0] #points of the ray where they move to the next grid line along the x, or y
+    side_step_y = [0,0]
 
 
-        x_direction = 1 #these are for if the x and y go up or down
-        y_direction = 1
+    x_direction = 1 #these are for if the x and y go up or down
+    y_direction = 1
 
-        if angle <= 1.5707 or angle > 4.712: #up
-            y_direction= -1
-        if angle >3.14159: #left
-            x_direction= -1
+    if angle <= 1.5707 or angle > 4.712: #up
+        y_direction= -1
+    if angle >3.14159: #left
+        x_direction= -1
 
-        while not is_blocked:
-            degree_angles = math.degrees(angle)
+    while not is_blocked:
+        degree_angles = math.degrees(angle)
 
-            if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:#if there is a wall
-                is_blocked = True
-                
-                image_index=0
-                if degree_angles%180==0:
-                    image_index = int((ray_pos[0]%1)/0.0625)
-                elif degree_angles%90==0:
-                    image_index = int((ray_pos[1]%1)/0.0625)
-                elif ray_pos == side_step_x:
-                    image_index = int((ray_pos[1]%1)/0.0625)
-                elif ray_pos == side_step_y:
-                    image_index = int((ray_pos[0]%1)/0.0625)
+        if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:#if there is a wall
+            is_blocked = True
+            
+            image_index=0
+            if degree_angles%180==0:
+                image_index = int((ray_pos[0]%1)/0.0625)
+            elif degree_angles%90==0:
+                image_index = int((ray_pos[1]%1)/0.0625)
+            elif ray_pos == side_step_x:
+                image_index = int((ray_pos[1]%1)/0.0625)
+            elif ray_pos == side_step_y:
+                image_index = int((ray_pos[0]%1)/0.0625)
 
-                draw_beam(count*raycast_column_width,round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index)#function, calculate the spot along the screen and the true distance with fixed for fish bowl distortion
+            draw_beam(count*raycast_column_width,round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index)#function, calculate the spot along the screen and the true distance with fixed for fish bowl distortion
+        else:
+
+            if degree_angles%90!=0:
+                scale_x = math.tan(angle)*y_direction #sohcahtoa for how much to move when index of one
+                scale_y = 1/math.tan(angle)*x_direction  
             else:
+                scale_x = int(math.sin(angle)) #0=0,90=1, 180=0, 270=-1
+                scale_y = int(math.cos(math.radians(degree_angles+180)))# 0=-1, 90=0, 180=1, 270=0
 
-                if degree_angles%90!=0:
-                    scale_x = math.tan(angle)*y_direction #sohcahtoa for how much to move when index of one
-                    scale_y = 1/math.tan(angle)*x_direction  
-                else:
-                    scale_x = int(math.sin(angle)) #0=0,90=1, 180=0, 270=-1
-                    scale_y = int(math.cos(math.radians(degree_angles+180)))# 0=-1, 90=0, 180=1, 270=0
-
-                #many many edge cases
-                if degree_angles%90==0:#hardcoding for when tan = 0 or i
-                    if ray_pos == player_pos and ray_pos[0]%1!=0 and ray_pos[1]%1!=0:#not on grid lines
+            #many many edge cases
+            if degree_angles%90==0:#hardcoding for when tan = 0 or i
+                if ray_pos == player_pos and ray_pos[0]%1!=0 and ray_pos[1]%1!=0:#not on grid lines
+                    
+                    if degree_angles == 0:
                         
-                        if degree_angles == 0:
-                            
-                            distance_travelled=ray_pos[1]-int(ray_pos[1])
-                            ray_pos_grid[1]-= math.ceil(ray_pos[1]%1)
-                            ray_pos[1]=int(ray_pos[1])
+                        distance_travelled=ray_pos[1]-int(ray_pos[1])
+                        ray_pos_grid[1]-= math.ceil(ray_pos[1]%1)
+                        ray_pos[1]=int(ray_pos[1])
 
-                        elif degree_angles == 90:
-                            distance_travelled=math.ceil(ray_pos[0])-ray_pos[0]
-                            ray_pos[0]=math.ceil(ray_pos[0])
-                            ray_pos_grid[0]+=1
+                    elif degree_angles == 90:
+                        distance_travelled=math.ceil(ray_pos[0])-ray_pos[0]
+                        ray_pos[0]=math.ceil(ray_pos[0])
+                        ray_pos_grid[0]+=1
 
-                        elif degree_angles == 180:
-                            distance_travelled=math.ceil(ray_pos[1])-ray_pos[1]
-                            ray_pos_grid[1]+=math.ceil(ray_pos[1]%1)
-                            ray_pos[1]=math.ceil(ray_pos[1])
+                    elif degree_angles == 180:
+                        distance_travelled=math.ceil(ray_pos[1])-ray_pos[1]
+                        ray_pos_grid[1]+=math.ceil(ray_pos[1]%1)
+                        ray_pos[1]=math.ceil(ray_pos[1])
 
-                        elif degree_angles == 270:
-                            distance_travelled=ray_pos[0]-int(ray_pos[0])
-                            ray_pos[0]=int(ray_pos[0])
-                            ray_pos_grid[0]-=1
+                    elif degree_angles == 270:
+                        distance_travelled=ray_pos[0]-int(ray_pos[0])
+                        ray_pos[0]=int(ray_pos[0])
+                        ray_pos_grid[0]-=1
 
-                    elif ray_pos == player_pos and ray_pos[1]%1==0 and ray_pos[0]%1!=0:#when on y grid
-                        if degree_angles == 0:
-                            distance_travelled=1
-                            ray_pos_grid[1]-= 2#when use int to get grid pos it don't work properly, and only for the negative direction
-                            ray_pos[1]-=1
-                           
-                        elif degree_angles == 90:
-                            distance_travelled=math.ceil(ray_pos[0])-ray_pos[0]
-                            ray_pos[0]=math.ceil(ray_pos[0])
-                            ray_pos_grid[0]+=1
+                elif ray_pos == player_pos and ray_pos[1]%1==0 and ray_pos[0]%1!=0:#when on y grid
+                    if degree_angles == 0:
+                        distance_travelled=1
+                        ray_pos_grid[1]-= 2#when use int to get grid pos it don't work properly, and only for the negative direction
+                        ray_pos[1]-=1
+                        
+                    elif degree_angles == 90:
+                        distance_travelled=math.ceil(ray_pos[0])-ray_pos[0]
+                        ray_pos[0]=math.ceil(ray_pos[0])
+                        ray_pos_grid[0]+=1
 
-                        elif degree_angles == 180:
-                            distance_travelled=1
-                            ray_pos_grid[1]+=1
-                            ray_pos[1]=math.ceil(ray_pos[1])
+                    elif degree_angles == 180:
+                        distance_travelled=1
+                        ray_pos_grid[1]+=1
+                        ray_pos[1]=math.ceil(ray_pos[1])
 
-                        elif degree_angles == 270:
-                            distance_travelled=ray_pos[0]-int(ray_pos[0])
-                            ray_pos[0]=int(ray_pos[0])
-                            ray_pos_grid[0]-=1
+                    elif degree_angles == 270:
+                        distance_travelled=ray_pos[0]-int(ray_pos[0])
+                        ray_pos[0]=int(ray_pos[0])
+                        ray_pos_grid[0]-=1
 
-                    elif ray_pos == player_pos and ray_pos[0]%1==0 and ray_pos[1]%1!=0:#when on x grid
-                        if degree_angles == 0:
-                            distance_travelled=ray_pos[1]-int(ray_pos[1])
-                            ray_pos_grid[1]-= 1
-                            ray_pos[1]=int(ray_pos[1])
+                elif ray_pos == player_pos and ray_pos[0]%1==0 and ray_pos[1]%1!=0:#when on x grid
+                    if degree_angles == 0:
+                        distance_travelled=ray_pos[1]-int(ray_pos[1])
+                        ray_pos_grid[1]-= 1
+                        ray_pos[1]=int(ray_pos[1])
 
-                        elif degree_angles == 90:
-                            distance_travelled=1
-                            ray_pos[0]=math.ceil(ray_pos[0])
-                            ray_pos_grid[0]+=1
+                    elif degree_angles == 90:
+                        distance_travelled=1
+                        ray_pos[0]=math.ceil(ray_pos[0])
+                        ray_pos_grid[0]+=1
 
-                        elif degree_angles == 180:
-                            distance_travelled=math.ceil(ray_pos[1])-ray_pos[1]
-                            ray_pos_grid[1]+=1
-                            ray_pos[1]=math.ceil(ray_pos[1])
+                    elif degree_angles == 180:
+                        distance_travelled=math.ceil(ray_pos[1])-ray_pos[1]
+                        ray_pos_grid[1]+=1
+                        ray_pos[1]=math.ceil(ray_pos[1])
 
-                        elif degree_angles == 270:
-                            distance_travelled=1
-                            ray_pos[0]=int(ray_pos[0])
-                            ray_pos_grid[0]-=2
-                    
-                    elif ray_pos == player_pos:
-                        if degree_angles==90 or degree_angles==180:
-                            ray_pos[0] += scale_x
-                            ray_pos[1] += scale_y
-                            ray_pos_grid[0] += scale_x
-                            ray_pos_grid[1] += scale_y
-                            distance_travelled=1
-                        else:
-                            ray_pos[0] += scale_x
-                            ray_pos[1] += scale_y
-                            ray_pos_grid[0] += scale_x*2 #when ray moving in a negative direction it needs to be doubled on the first push on the grid otherwise it tracks wrong due to the interger func at decleration. 
-                            ray_pos_grid[1] += scale_y*2
-                            distance_travelled=1
-                    
-                    else:
+                    elif degree_angles == 270:
+                        distance_travelled=1
+                        print(ray_pos[0],int(ray_pos[0]))
+                        ray_pos[0]-=1
+                        ray_pos_grid[0]-=2
+                
+                elif ray_pos == player_pos:#both grid lines
+                    if degree_angles==90 or degree_angles==180:
                         ray_pos[0] += scale_x
                         ray_pos[1] += scale_y
                         ray_pos_grid[0] += scale_x
                         ray_pos_grid[1] += scale_y
                         distance_travelled=1
-                #side step x is where x+=1, y is for y+=1
-                elif ray_pos==player_pos and ray_pos[0]%1!=0 and ray_pos[1]%1!=0:#not on grid line
-                    
-                    #if angle !=90:
-                    if x_direction == 1:#right
-                        side_step_x = [math.ceil(ray_pos[0]),ray_pos[1]-(-ray_pos[0]+math.ceil(ray_pos[0]))*scale_y]
-                    else: #left
-                        side_step_x = [int(ray_pos[0]),ray_pos[1]+(-ray_pos[0]+int(ray_pos[0]))*scale_y]
-
-                    if y_direction == 1:#dwon
-                        side_step_y = [ray_pos[0]-(-ray_pos[1]+math.ceil(ray_pos[1]))*scale_x,math.ceil(ray_pos[1])]
-                    else: # same as ==-1, up
-                        side_step_y = [ray_pos[0]+(-ray_pos[1]+int(ray_pos[1]))*scale_x,int(ray_pos[1])]
-
-                    
-                    
-                elif ray_pos==player_pos and ray_pos[0]%1==0 and ray_pos[1]%1!=0:#x grid line
-                    if x_direction == -1:
-                        side_step_x = ray_pos[0],ray_pos[1]
                     else:
-                        side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
-                    
-                    if y_direction == 1:#dwon
-                        side_step_y = [ray_pos[0]-(-ray_pos[1]+math.ceil(ray_pos[1]))*scale_x,math.ceil(ray_pos[1])]
-                    else: # same as ==-1, up
-                        side_step_y = [ray_pos[0]+(-ray_pos[1]+int(ray_pos[1]))*scale_x,int(ray_pos[1])]
-
-
-                elif ray_pos==player_pos and ray_pos[0]%1!=0 and ray_pos[1]%1==0:#on y grid line
-                    if x_direction == 1:#right
-                        side_step_x = [math.ceil(ray_pos[0]),ray_pos[1]-(-ray_pos[0]+math.ceil(ray_pos[0]))*scale_y]
-                    else: #left
-                        side_step_x = [int(ray_pos[0]),ray_pos[1]+(-ray_pos[0]+int(ray_pos[0]))*scale_y]
- 
-                    if y_direction == -1:
-                        side_step_y = ray_pos[0],ray_pos[1]
-                    else:
-                        side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+1] 
-
-                elif ray_pos==player_pos and ray_pos[0]%1==0 and ray_pos[1]%1==0:#on both grid lines
-                    if x_direction == -1:
-                        side_step_x = ray_pos[0],ray_pos[1]
-                    else:
-                        side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
-                    
-                    if y_direction == -1:
-                        side_step_y = ray_pos[0],ray_pos[1]
-                    else:
-                        side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+1] 
+                        ray_pos[0] += scale_x
+                        ray_pos[1] += scale_y
+                        ray_pos_grid[0] += scale_x*2 #when ray moving in a negative direction it needs to be doubled on the first push on the grid otherwise it tracks wrong due to the interger func at decleration. 
+                        ray_pos_grid[1] += scale_y*2
+                        distance_travelled=1
                 
                 else:
-                    
-                    if ray_pos==side_step_x:
-                        side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
-                    elif ray_pos==side_step_y:
-                        side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+y_direction]
-
-
-                if degree_angles%90!=0:
-                    ray_pos,distance_travelled = smaller_point_dist(side_step_x,side_step_y,ray_pos)
-                    
-                    if ray_pos == side_step_x:
-                        ray_pos_grid[0]+=x_direction
-                    elif ray_pos == side_step_y:
-                        ray_pos_grid[1]+=y_direction
+                    ray_pos[0] += scale_x
+                    ray_pos[1] += scale_y
+                    ray_pos_grid[0] += scale_x
+                    ray_pos_grid[1] += scale_y
+                    distance_travelled=1
+            #side step x is where x+=1, y is for y+=1
+            elif ray_pos==player_pos and ray_pos[0]%1!=0 and ray_pos[1]%1!=0:#not on grid line
                 
+                #if angle !=90:
+                if x_direction == 1:#right
+                    side_step_x = [math.ceil(ray_pos[0]),ray_pos[1]-(-ray_pos[0]+math.ceil(ray_pos[0]))*scale_y]
+                else: #left
+                    side_step_x = [int(ray_pos[0]),ray_pos[1]+(-ray_pos[0]+int(ray_pos[0]))*scale_y]
 
-                ray_distance+=distance_travelled
+                if y_direction == 1:#dwon
+                    side_step_y = [ray_pos[0]-(-ray_pos[1]+math.ceil(ray_pos[1]))*scale_x,math.ceil(ray_pos[1])]
+                else: # same as ==-1, up
+                    side_step_y = [ray_pos[0]+(-ray_pos[1]+int(ray_pos[1]))*scale_x,int(ray_pos[1])]
+      
+            elif ray_pos==player_pos and ray_pos[0]%1==0 and ray_pos[1]%1!=0:#x grid line
+                if x_direction == -1:
+                    side_step_x = ray_pos[0],ray_pos[1]
+                else:
+                    side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
+                
+                if y_direction == 1:#dwon
+                    side_step_y = [ray_pos[0]-(-ray_pos[1]+math.ceil(ray_pos[1]))*scale_x,math.ceil(ray_pos[1])]
+                else: # same as ==-1, up
+                    side_step_y = [ray_pos[0]+(-ray_pos[1]+int(ray_pos[1]))*scale_x,int(ray_pos[1])]
+
+            elif ray_pos==player_pos and ray_pos[0]%1!=0 and ray_pos[1]%1==0:#on y grid line
+                if x_direction == 1:#right
+                    side_step_x = [math.ceil(ray_pos[0]),ray_pos[1]-(-ray_pos[0]+math.ceil(ray_pos[0]))*scale_y]
+                else: #left
+                    side_step_x = [int(ray_pos[0]),ray_pos[1]+(-ray_pos[0]+int(ray_pos[0]))*scale_y]
+
+                if y_direction == -1:
+                    side_step_y = ray_pos[0],ray_pos[1]
+                else:
+                    side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+1] 
+
+            elif ray_pos==player_pos and ray_pos[0]%1==0 and ray_pos[1]%1==0:#on both grid lines
+                if x_direction == -1:
+                    side_step_x = ray_pos[0],ray_pos[1]
+                else:
+                    side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
+                
+                if y_direction == -1:
+                    side_step_y = ray_pos[0],ray_pos[1]
+                else:
+                    side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+1] 
+            
+            else:
+                
+                if ray_pos==side_step_x:
+                    side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
+                elif ray_pos==side_step_y:
+                    side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+y_direction]
+
+
+            if degree_angles%90!=0:
+                ray_pos,distance_travelled = smaller_point_dist(side_step_x,side_step_y,ray_pos)
+                
+                if ray_pos == side_step_x:
+                    ray_pos_grid[0]+=x_direction
+                elif ray_pos == side_step_y:
+                    ray_pos_grid[1]+=y_direction
+            
+
+            ray_distance+=distance_travelled
+
+
+def raycast():
+    t= time.perf_counter()
+
+    count = 0
+    #ray_pos=[1.5,2.5]
+    while count < 1280//raycast_column_width:
+        raycast_ray(count=count)
 
 
         count+=1
@@ -312,6 +315,7 @@ def draw_screen():
 
 draw_screen()
 
+turning = 0
 
 while running:
     for event in pygame.event.get():
@@ -330,13 +334,19 @@ while running:
                     player_pos[0]-=0.25
                 draw_screen()
             if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                for _ in range(30):
-                    player_angle-=3
-                    draw_screen()
+                if turning == 0:
+                    turning =-5
+                    
             if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                player_angle+=90
-                draw_screen()
+                if turning == 0:
+                    turning = 5
 
+
+    if turning != 0:
+        player_angle+=turning
+        draw_screen()
+        if player_angle%90==0:
+            turning=0
 
     clock.tick(30)  
 
