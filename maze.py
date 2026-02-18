@@ -66,7 +66,9 @@ def format_maze(map: list, size: int) -> list:
 
 
 def maze_generate(size: int) -> list:
-    
+    backtracking = False
+
+
     x_start,y_start = randint(0,size//2)*2,randint(0,size//2)*2
 
     maze = [[1 for _ in range(size)] for _ in range(size)]
@@ -78,23 +80,38 @@ def maze_generate(size: int) -> list:
     #print(still_need_to_backtrack(maze))
     while still_need_to_backtrack(maze):
         if len(points)!= 0:
-            
             move_to = choice(points)
             maze[move_to[1]][move_to[0]] = 100#go back to this one
             maze[(move_to[1]+tracker_point[1])//2][(move_to[0]+tracker_point[0])//2] = 0 #mid point
             tracker_point = move_to[0],move_to[1]
             points =  free_spaces(maze,tracker_point)
+            backtracking = False
         else:
             #print(tracker_point)
             
             point = back_space(maze, tracker_point)
             #print(point)
-            #
-            maze[tracker_point[1]][tracker_point[0]] = 0
+            if not backtracking:
+                maze[tracker_point[1]][tracker_point[0]] = "R"
+                backtracking = True
+            else:
+                maze[tracker_point[1]][tracker_point[0]] = 0
+
             tracker_point = point[0],point[1]
 
             points =  free_spaces(maze,tracker_point)
 
+    maze[y_start][x_start]="W"
+
+    R_points = []
+    for y in range(size):
+        for x in range(size):
+            if maze[y][x] == "R":
+                R_points.append([x,y])
+
+    #print(R_points)
+    Choose_R_point = choice(R_points)
+    maze[Choose_R_point[1]][Choose_R_point[0]] = "S"
 
     return [format_maze(maze, size),[x_start+1.5,y_start+1.5]]
 

@@ -2,9 +2,11 @@ import pygame
 from PIL import Image
 import math
 import time
+
 #from multiprocessing import Pool, Process
 #import numba
 #import random
+
 import maze
 
 
@@ -14,7 +16,7 @@ print("Hello World!")
 
 map = [[1,1,1,1,1],
        [1,1,0,0,1],
-       [1,1,0,1,1],
+       [1,1,"S",1,1],
        [1,0,0,0,1],
        [1,0,0,0,1],
        [1,0,"W",1,1],
@@ -28,7 +30,10 @@ map = [[1,1,1,1,1],
 
 player_pos = [2.5,5.5]
 
-map,player_pos = maze.maze_generate(11)
+def new_maze():
+    global map, player_pos
+
+    map,player_pos = maze.maze_generate(11)
 
 #player_pos[0]+=1.5
 #player_pos[1]+=1.5
@@ -53,9 +58,9 @@ class image():
             self.img_slices.append(self.main_image.crop((i,0,i+1,16)))
     
 
+sprites = []
 
-
-
+sprite_img = pygame.image.load("assets/Door.png").convert_alpha()
 
 def draw_beam(x_point,distance,image_index): #literally just takes the point along the screen and draws a line based on distance away from the camera
     # if distance > 1:
@@ -81,8 +86,11 @@ def smaller_point_dist(pointA,pointB,pointReference): # takes 3 points, and comp
     else:
         return pointB, distB
 
-#@numba.njit
+#@numba.njit doesnt work
+
+#code for the actual ray
 def raycast_ray(count):
+    global sprites
 
     ray_pos = [player_pos[0],player_pos[1]] #index-coord: 0=x, 1=y  ,note to self that the map indexing is y,x not x,y
     ray_pos_grid = [int(ray_pos[0]),int(ray_pos[1])] #gets the index on the map/array of the player
@@ -107,6 +115,10 @@ def raycast_ray(count):
 
     while not is_blocked:
         degree_angles = math.degrees(angle)
+
+        if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":
+            if (ray_pos_grid[1],ray_pos_grid[0]) not in sprites:
+                sprites.append( (ray_pos_grid[1],ray_pos_grid[0]) )
 
         if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:#if there is a wall
             is_blocked = True
@@ -288,7 +300,11 @@ def raycast_ray(count):
 
 
 def raycast():
-    t= time.perf_counter()
+    global sprites
+
+    sprites = []
+
+    #t= time.perf_counter()
 
     #count = 0
     #ray_pos=[1.5,2.5]
@@ -307,15 +323,27 @@ def raycast():
         draw_beam(i*raycast_column_width,l[i][0],l[i][1])
 
         #count+=1
-    print(time.perf_counter()-t)
+    #print(time.perf_counter()-t)
 
+
+
+def draw_sprites():
+    for i in sprites:
+        pass
 
 
 def draw_screen():
     screen.fill("dark grey")
     pygame.draw.rect(screen,(34,34,34), pygame.Rect(0,0,1280,360))
     raycast()
-    
+    #print(sprites)
+    if len(sprites) != 0:
+        sprite_distance = (math.sqrt( (player_pos[0]-(sprites[0][0]+0.5))**2 + (player_pos[1]-(sprites[0][1]+0.5))**2 ))
+        sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprites[0][1]+0.5)) , (player_pos[0]-(sprites[0][0]+0.5)) )
+        print((math.degrees(sprite_bearing)+player_angle)%360 , math.degrees(sprite_bearing),player_angle)
+        #print(sprite_distance)
+        if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270):
+            screen.blit(pygame.transform.scale_by(sprite_img,20/sprite_distance), (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))),(360-(160/sprite_distance))))
     pygame.display.flip()
 
 
@@ -372,15 +400,16 @@ def main():
                     player_pos[0]+=0.05*math.sin(math.radians(player_angle))
             except:
                 pass
-            #draw_screen()
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             player_angle -= 5
-            #draw_screen()
         if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
             player_angle += 5
-            #draw_screen()
         
         if True in [keys[pygame.K_UP],keys[pygame.K_LEFT],keys[pygame.K_RIGHT],keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_d]]:
+            draw_screen()
+
+        if map[int(player_pos[1])][int(player_pos[0])]=="S": #can change later so we in the centre 0.5 square
+            new_maze()
             draw_screen()
 
 
