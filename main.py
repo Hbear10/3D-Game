@@ -1,52 +1,47 @@
 import pygame
 from PIL import Image
 import math
-import time
-
-#from multiprocessing import Pool, Process
-#import numba
-#import random
+#import time
 
 import maze
-
-
-from render import *
+#from render import *
 
 print("Hello World!")
 
-map = [[1,1,1,1,1],
-       [1,1,0,0,1],
-       [1,1,"S",1,1],
+#The traversable map is stored as a 2D array
+map = [[1,1,1,1,1,1,1,1,1],
+       [1,0,0,0,0,0,0,0,1],
+       [1,0,"S",0,1,1,1,1,1],
+       [1,0,0,0,1],
+       [1,0,"S",0,1],
+       [1,0,0,0,1],
+       [1,0,"S",0,1],
        [1,0,0,0,1],
        [1,0,0,0,1],
-       [1,0,"W",1,1],
+       [1,0,0,0,1],
+       [1,0,0,0,1],
+       [1,0,"W",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
        [1,1,1,1,1]]
 
-# map = [[1,1,1,1,],
-#         [1,0,0,1],
-#         [1,0,0,1],
-#         [1,"W",1,1],
-#         [1,1,1,1]]
+player_pos = [2.5,10.5]#The coordinate of the player
 
-player_pos = [2.5,5.5]
+FOV = 100 #The field of view of the player
 
 def new_maze():
     global map, player_pos
 
     map,player_pos = maze.maze_generate(11)
 
-#player_pos[0]+=1.5
-#player_pos[1]+=1.5
-#print(map,player_pos)
-raycast_column_width =2
-raycast_resolution = FOV / (1280 / raycast_column_width)
+
+raycast_column_width = 2 #The width of each pixel column, increase to improve performance as it reduces the amount of rays sent
+
 
 pygame.init()
-screen = pygame.display.set_mode((1280,720))
+screen = pygame.display.set_mode((1280,720)) #720p
 
-clock = pygame.time.Clock()
+clock = pygame.time.Clock()#Used later to set FPS cap
 
-player_angle=0
+player_angle=0 # Direction the player is facing
 
 class image():
     def __init__(self,image_name):
@@ -62,33 +57,22 @@ sprites = []
 
 sprite_img = pygame.image.load("assets/Door.png").convert_alpha()
 
-def draw_beam(x_point,distance,image_index): #literally just takes the point along the screen and draws a line based on distance away from the camera
-    # if distance > 1:
-    #     colour_index = 1/distance
-    # else:
-    #     colour_index = 1
+def draw_beam(x_point,distance,image_index): #literally just takes the point along the screen and draws a line based on distance away from the camera, image index is for what column along an image to take
+    ray_slice = brick.img_slices[image_index].transform((raycast_column_width,int(360/distance)),Image.Transform.EXTENT,[0,0,1,16]) #transforms the image slice to the right size, 
+    pygame_surface = pygame.image.fromstring(ray_slice.tobytes(),ray_slice.size,ray_slice.mode).convert() #Turns the PIL image into a pygame image
+    screen.blit(pygame_surface, pygame_surface.get_rect(center = (x_point+(raycast_column_width//2), 360))) # Draws the image slice onto the screen
 
-    #ray_slice = brick.img_slices[5].transform((1,16),Image.Transform.AFFINE,[1,0,0,0,2,0]).show()
-
-
-    ray_slice = brick.img_slices[image_index].transform((raycast_column_width,int(360/distance)),Image.Transform.EXTENT,[0,0,1,16])#.show()
-    pygame_surface = pygame.image.fromstring(ray_slice.tobytes(),ray_slice.size,ray_slice.mode).convert()
-    screen.blit(pygame_surface, pygame_surface.get_rect(center = (x_point+(raycast_column_width//2), 360)))
-    
-    #pygame.draw.rect(screen,color=(0, int(255*colour_index), int(255*colour_index) ),rect=pygame.Rect(x_point,360-(300/distance)/2,raycast_column_width,300/distance))
 
 
 def smaller_point_dist(pointA,pointB,pointReference): # takes 3 points, and compares the first 2 to the third and returns the nearest point and the distance
     distA = math.sqrt((pointA[0]-pointReference[0])**2+(pointA[1]-pointReference[1])**2) #pythagoras
     distB = math.sqrt((pointB[0]-pointReference[0])**2+(pointB[1]-pointReference[1])**2) #pythagoras
-    if distA < distB:
+    if distA < distB:#return the closer point and the distance
         return pointA, distA
     else:
         return pointB, distB
 
-#@numba.njit doesnt work
-
-#code for the actual ray
+#code for the each individual ray, this uses the DDA algorithm to calculate the distance. 
 def raycast_ray(count):
     global sprites
 
@@ -97,7 +81,7 @@ def raycast_ray(count):
     ray_distance = 0
     is_blocked = False
 
-    DIST = 500 #dist is a constant of distance to imaginary wall that we are casting on
+    DIST = 5*FOV #dist is a constant of distance to imaginary wall that we are casting on
     angle = math.radians((math.degrees(math.atan((count*raycast_column_width-640) / DIST))+player_angle)%360) #math.radians((raycast_resolution*count-(FOV/2)+player_angle)%360)
     #This uses angles with fixed pixel increments instead of fixed angle increments which removes distortion on the sides of the screen more info in the doc
 
@@ -105,25 +89,25 @@ def raycast_ray(count):
     side_step_y = [0,0]
 
 
-    x_direction = 1 #these are for if the x and y go up or down
+    x_direction = 1 #these are for if the x and y go up or down and left or right
     y_direction = 1
 
-    if angle <= 1.5707 or angle > 4.712: #up
+    if angle <= 1.5707 or angle > 4.712: #up, these values are approximations of the radians of pi/2 and 3pi/2
         y_direction= -1
     if angle >3.14159: #left
         x_direction= -1
 
-    while not is_blocked:
-        degree_angles = math.degrees(angle)
+    while not is_blocked:#Until the ray meets a boundary
+        degree_angles = math.degrees(angle)#convert angle from radians to degrees as it makes some calculations easier
 
-        if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":
-            if (ray_pos_grid[1],ray_pos_grid[0]) not in sprites:
-                sprites.append( (ray_pos_grid[1],ray_pos_grid[0]) )
+        if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":#if there are any sprites on the screen that should be rendered
+            if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites:
+                sprites.append( (ray_pos_grid[0],ray_pos_grid[1]) ) 
 
         if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:#if there is a wall
             is_blocked = True
             
-            image_index=0
+            image_index=0# which column of an image/wall the ray hit, 0.0625 is 1/16, starts from 0 and goes to 15
             if degree_angles%180==0:
                 image_index = int((ray_pos[0]%1)/0.0625)
             elif degree_angles%90==0:
@@ -133,8 +117,7 @@ def raycast_ray(count):
             elif ray_pos == side_step_y:
                 image_index = int((ray_pos[0]%1)/0.0625)
             
-            return (round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index)
-            #draw_beam(count*raycast_column_width,round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index)#function, calculate the spot along the screen and the true distance with fixed for fish bowl distortion
+            return (round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index)#returns the distance to a wall (multipled by the cos of the angle to fix distortion) and the image index
         else:
 
             if degree_angles%90!=0:
@@ -282,9 +265,9 @@ def raycast_ray(count):
             else:
                 
                 if ray_pos==side_step_x:
-                    side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]
+                    side_step_x=[ray_pos[0]+x_direction,ray_pos[1]-scale_y]#move this pos along by 1 in the x
                 elif ray_pos==side_step_y:
-                    side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+y_direction]
+                    side_step_y = [ray_pos[0]-scale_x,ray_pos[1]+y_direction]#move this pos along by 1 in the y
 
 
             if degree_angles%90!=0:
@@ -305,31 +288,32 @@ def raycast():
     sprites = []
 
     #t= time.perf_counter()
-
-    #count = 0
-    #ray_pos=[1.5,2.5]
-    #while count < 1280//raycast_column_width:
-        #raycast_ray(count=count)
     
-    l=[]
-    for i in range(1280//raycast_column_width):
-    #with Pool() as p:
-        #l = p.map(raycast_ray, list(range(1280//raycast_column_width))) 
-        l.append(raycast_ray(i))
-    for i in range(1280//raycast_column_width):
-        #p = Process(target=draw_beam, args=(i*raycast_column_width,l[i][0],l[i][1]))
-        #p.start()
-        #p.join()
-        draw_beam(i*raycast_column_width,l[i][0],l[i][1])
+    ray_store=[]
+    for i in range(1280//raycast_column_width):#cast all the rays
+        ray_store.append(raycast_ray(i))
+    for i in range(1280//raycast_column_width):#draw all the rays
+        draw_beam(i*raycast_column_width,ray_store[i][0],ray_store[i][1])
 
-        #count+=1
     #print(time.perf_counter()-t)
 
 
 
 def draw_sprites():
-    for i in sprites:
-        pass
+    print(len(sprites))
+    for sprite in sprites:
+        sprite_distance = (math.sqrt( (player_pos[0]-(sprite[0]+0.5))**2 + (player_pos[1]-(sprite[1]+0.5))**2 ))   
+        
+        #print(math.cos(math.radians(player_angle)-math.cos( (player_pos[0]-(sprite[0]+0.5)) )))
+        #sprite_distance =  sprite_distance * math.cos( math.radians(player_angle)-math.atan2( (player_pos[1]-(sprites[0][1]+0.5)) , (player_pos[0]-(sprites[0][0]+0.5)) ))
+
+        sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5)) )
+        #print((math.degrees(sprite_bearing)+player_angle)%360 , math.degrees(sprite_bearing),player_angle)
+        #print(f"{sprite_bearing=}, {player_pos[0]=}, {(sprite[0]+0.5)=}")
+        #print(sprite_distance)
+        if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270):
+            screen.blit(pygame.transform.scale_by(sprite_img,20/sprite_distance), (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))),(360-(160/sprite_distance))))
+    
 
 
 def draw_screen():
@@ -337,13 +321,7 @@ def draw_screen():
     pygame.draw.rect(screen,(34,34,34), pygame.Rect(0,0,1280,360))
     raycast()
     #print(sprites)
-    if len(sprites) != 0:
-        sprite_distance = (math.sqrt( (player_pos[0]-(sprites[0][0]+0.5))**2 + (player_pos[1]-(sprites[0][1]+0.5))**2 ))
-        sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprites[0][1]+0.5)) , (player_pos[0]-(sprites[0][0]+0.5)) )
-        print((math.degrees(sprite_bearing)+player_angle)%360 , math.degrees(sprite_bearing),player_angle)
-        #print(sprite_distance)
-        if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270):
-            screen.blit(pygame.transform.scale_by(sprite_img,20/sprite_distance), (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))),(360-(160/sprite_distance))))
+    draw_sprites()
     pygame.display.flip()
 
 

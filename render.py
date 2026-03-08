@@ -1,4 +1,4 @@
 #import math
 
-FOV = 100
+#move rendering functions into here 
           
