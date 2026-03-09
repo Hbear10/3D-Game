@@ -51,7 +51,13 @@ class image():
         self.img_slices = []
         for i in range(self.width):
             self.img_slices.append(self.main_image.crop((i,0,i+1,16)))
-    
+
+
+class sprites():
+    def __init__(self):
+        pass
+
+
 
 sprites = []
 
@@ -300,12 +306,13 @@ def raycast():
 
 
 def draw_sprites():
-    print(len(sprites))
-    for sprite in sprites:
+    #print(len(sprites))
+    for sprite in sprites[::-1]:
         sprite_distance = (math.sqrt( (player_pos[0]-(sprite[0]+0.5))**2 + (player_pos[1]-(sprite[1]+0.5))**2 ))   
         
         #print(math.cos(math.radians(player_angle)-math.cos( (player_pos[0]-(sprite[0]+0.5)) )))
-        #sprite_distance =  sprite_distance * math.cos( math.radians(player_angle)-math.atan2( (player_pos[1]-(sprites[0][1]+0.5)) , (player_pos[0]-(sprites[0][0]+0.5)) ))
+        sprite_distance =  sprite_distance * math.cos(math.radians(90) + math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5))))
+        print(90+math.degrees(math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5)))))
 
         sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5)) )
         #print((math.degrees(sprite_bearing)+player_angle)%360 , math.degrees(sprite_bearing),player_angle)
