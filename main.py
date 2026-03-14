@@ -4,6 +4,7 @@ import math
 #import time
 
 import maze
+import block_scan
 #from render import *
 
 print("Hello World!")
@@ -23,7 +24,7 @@ map = [[1,1,1,1,1,1,1,1,1],
        [1,0,"W",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
        [1,1,1,1,1]]
 
-player_pos = [2.5,10.5]#The coordinate of the player
+player_pos = [2.5,10.5]#The coordinate of the player, (xy)
 
 FOV = 100 #The field of view of the player
 
@@ -53,15 +54,42 @@ class image():
             self.img_slices.append(self.main_image.crop((i,0,i+1,16)))
 
 
-class sprites():
-    def __init__(self):
-        pass
+sprites_loaded = {"door" : pygame.image.load("assets/Door.png").convert_alpha()}
+
+
+class sprite_obj():
+    def __init__(self,x,y):
+        self.sprite_image = sprites_loaded["door"]
+        self.sprite_x = x
+        self.sprite_y = y
+        self.distance = math.sqrt((x-player_pos[0])**2+(y-player_pos[1])**2)* math.cos(math.radians(90) + math.radians(player_angle)-math.atan2( (player_pos[1]-(y)) , (player_pos[0]-(x))))
+        self.left_point = (0,0)
+        self.right_point = (0,0)
 
 
 
 sprites = []
+sprites_pos_that_can_be_rendered = []#to check for what new objects to create
 
-sprite_img = pygame.image.load("assets/Door.png").convert_alpha()
+
+
+def order_sprites():#bubble sort, sorting the list into ascending order
+    global sprites
+
+    made_a_change = True
+    while made_a_change and len(sprites) > 1:#until the list is ordered and if there is enough sprites to actually sort
+        made_a_change = False #at the start there haven't been any swapps
+        for i in range(len(sprites)-1):#check each pair
+
+            if sprites[i].distance > sprites[i+1].distance:#if it is in the wrong order
+
+                made_a_change = True#will swap so set to true
+
+                #swap
+                temporary = sprites[i]  
+                sprites[i] = sprites[i+1]
+                sprites[i+1] = temporary
+
 
 def draw_beam(x_point,distance,image_index): #literally just takes the point along the screen and draws a line based on distance away from the camera, image index is for what column along an image to take
     ray_slice = brick.img_slices[image_index].transform((raycast_column_width,int(360/distance)),Image.Transform.EXTENT,[0,0,1,16]) #transforms the image slice to the right size, 
@@ -107,8 +135,12 @@ def raycast_ray(count):
         degree_angles = math.degrees(angle)#convert angle from radians to degrees as it makes some calculations easier
 
         if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":#if there are any sprites on the screen that should be rendered
-            if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites:
-                sprites.append( (ray_pos_grid[0],ray_pos_grid[1]) ) 
+            if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites_pos_that_can_be_rendered:
+                print(degree_angles)
+                sprites_pos_that_can_be_rendered.append( (ray_pos_grid[0],ray_pos_grid[1]) ) 
+                sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5) )
+            else:
+                sprites[-1].left_point = 0
 
         if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:#if there is a wall
             is_blocked = True
@@ -289,9 +321,10 @@ def raycast_ray(count):
 
 
 def raycast():
-    global sprites
+    global sprites,sprites_pos_that_can_be_rendered
 
     sprites = []
+    sprites_pos_that_can_be_rendered = []
 
     #t= time.perf_counter()
     
@@ -307,19 +340,24 @@ def raycast():
 
 def draw_sprites():
     #print(len(sprites))
+
+    order_sprites()
+
     for sprite in sprites[::-1]:
-        sprite_distance = (math.sqrt( (player_pos[0]-(sprite[0]+0.5))**2 + (player_pos[1]-(sprite[1]+0.5))**2 ))   
+        #sprite_distance = (math.sqrt( (player_pos[0]-(sprite[0]))**2 + (player_pos[1]-(sprite[1]))**2 ))   
         
         #print(math.cos(math.radians(player_angle)-math.cos( (player_pos[0]-(sprite[0]+0.5)) )))
-        sprite_distance =  sprite_distance * math.cos(math.radians(90) + math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5))))
-        print(90+math.degrees(math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5)))))
+        #sprite_distance =  sprite_distance * math.cos(math.radians(90) + math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1])) , (player_pos[0]-(sprite[0]))))
+        #print(90+math.degrees(math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5)))))
 
-        sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5)) )
+        sprite_distance = sprite.distance
+
+        sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprite.sprite_y)) , (player_pos[0]-(sprite.sprite_x)) )
         #print((math.degrees(sprite_bearing)+player_angle)%360 , math.degrees(sprite_bearing),player_angle)
         #print(f"{sprite_bearing=}, {player_pos[0]=}, {(sprite[0]+0.5)=}")
         #print(sprite_distance)
         if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270):
-            screen.blit(pygame.transform.scale_by(sprite_img,20/sprite_distance), (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))),(360-(160/sprite_distance))))
+            screen.blit(pygame.transform.scale_by(sprites_loaded["door"],20/sprite_distance), (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))),(360-(160/sprite_distance))))
     
 
 
@@ -345,7 +383,7 @@ def main():
 
     draw_screen()
 
-    turning = 0
+    #turning = 0
     running = True
 
     while running:
