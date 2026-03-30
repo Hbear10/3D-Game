@@ -17,7 +17,7 @@ map = [[1,1,1,1,1,1,1,1,1],
        [1,0,"S",0,1],
        [1,0,0,0,1],
        [1,0,"S",0,1],
-       [1,0,0,0,1],
+       [1,0,1,0,1],
        [1,0,0,0,1],
        [1,0,0,0,1],
        [1,0,0,0,1],
@@ -54,7 +54,10 @@ class image():
             self.img_slices.append(self.main_image.crop((i,0,i+1,16)))
 
 
+door = Image.open("Assets/Door.png")
+
 sprites_loaded = {"door" : pygame.image.load("assets/Door.png").convert_alpha()}
+
 
 
 class sprite_obj():
@@ -63,8 +66,8 @@ class sprite_obj():
         self.sprite_x = x
         self.sprite_y = y
         self.distance = math.sqrt((x-player_pos[0])**2+(y-player_pos[1])**2)* math.cos(math.radians(90) + math.radians(player_angle)-math.atan2( (player_pos[1]-(y)) , (player_pos[0]-(x))))
-        self.left_point = (0,0)
-        self.right_point = (0,0)
+        self.left_point = 0
+        self.right_point = 16
 
 
 
@@ -136,7 +139,7 @@ def raycast_ray(count):
 
         if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":#if there are any sprites on the screen that should be rendered
             if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites_pos_that_can_be_rendered:
-                print(degree_angles)
+                #print(degree_angles)
                 sprites_pos_that_can_be_rendered.append( (ray_pos_grid[0],ray_pos_grid[1]) ) 
                 sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5) )
             else:
@@ -229,7 +232,7 @@ def raycast_ray(count):
 
                     elif degree_angles == 270:
                         distance_travelled=1
-                        print(ray_pos[0],int(ray_pos[0]))
+                        #print(ray_pos[0],int(ray_pos[0]))
                         ray_pos[0]-=1
                         ray_pos_grid[0]-=2
                 
@@ -344,20 +347,46 @@ def draw_sprites():
     order_sprites()
 
     for sprite in sprites[::-1]:
-        #sprite_distance = (math.sqrt( (player_pos[0]-(sprite[0]))**2 + (player_pos[1]-(sprite[1]))**2 ))   
-        
-        #print(math.cos(math.radians(player_angle)-math.cos( (player_pos[0]-(sprite[0]+0.5)) )))
-        #sprite_distance =  sprite_distance * math.cos(math.radians(90) + math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1])) , (player_pos[0]-(sprite[0]))))
-        #print(90+math.degrees(math.radians(player_angle)-math.atan2( (player_pos[1]-(sprite[1]+0.5)) , (player_pos[0]-(sprite[0]+0.5)))))
 
         sprite_distance = sprite.distance
 
-        sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprite.sprite_y)) , (player_pos[0]-(sprite.sprite_x)) )
-        #print((math.degrees(sprite_bearing)+player_angle)%360 , math.degrees(sprite_bearing),player_angle)
-        #print(f"{sprite_bearing=}, {player_pos[0]=}, {(sprite[0]+0.5)=}")
-        #print(sprite_distance)
+        #print("hjijdfg hj ",math.degrees(math.atan((player_pos[0]-(sprite.sprite_x))  /  (player_pos[1]-(sprite.sprite_y))))%360)
+        theta = math.radians(90 - math.degrees(math.atan2((player_pos[0]-(sprite.sprite_x))  ,  (-player_pos[1]+(sprite.sprite_y))))%360)
+        #print(f"{(sprite.sprite_x-0.5*math.sin(theta),sprite.sprite_y-0.5*math.cos(theta))} {player_pos}")
+        #print(block_scan.scan(map, player_pos, (sprite.sprite_x-0.5*math.sin(theta),sprite.sprite_y+0.5*math.cos(theta))))
+        n = 0
+        while not block_scan.scan(map, player_pos, (sprite.sprite_x+ ((8-n)/8) * 0.5*math.sin(theta),sprite.sprite_y+ ((8-n)/8) *0.5*math.cos(theta))) and n <= 16:
+            n+=1
+
+            #pass
+
+        #else:
+            #print("x")
+            #n=1
+            #if block_scan.scan(map, player_pos, (sprite.sprite_x+(4/8)*0.5*math.sin(theta),sprite.sprite_y+0.25*math.cos(theta))):
+                 #print("Next")
+        #print(n)
+        sprite.left_point = n
+
+        n=16
+        while not block_scan.scan(map, player_pos, (sprite.sprite_x+ ((8-n)/8) * 0.5*math.sin(theta),sprite.sprite_y+ ((8-n)/8) *0.5*math.cos(theta))) and n <= 16:
+            n-=1
+        sprite.right_point = n
+
+            
+            #print(f"{math.degrees(theta)=}")
+
+        sprite_bearing = math.radians(90) - math.atan2( (player_pos[1]-(sprite.sprite_y)) , (player_pos[0]-(sprite.sprite_x)))
+        #print(f"{math.degrees(sprite_bearing)=}")
+
+
+
         if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270):
-            screen.blit(pygame.transform.scale_by(sprites_loaded["door"],20/sprite_distance), (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))),(360-(160/sprite_distance))))
+            sprite_scale_by = (20/sprite_distance) 
+            screen.blit(pygame.transform.scale_by(sprites_loaded["door"],sprite_scale_by),                        #image
+                        (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))-sprite_scale_by*sprite.left_point),#x start,  - the scale left point because - move it left and then fix to write spot
+                                    (360-(8*sprite_scale_by))),                                                   #y start              
+                        (sprite_scale_by*sprite.left_point,0,(sprite.right_point)*sprite_scale_by,16*sprite_scale_by))
     
 
 
