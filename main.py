@@ -351,12 +351,12 @@ def draw_sprites():
         sprite_distance = sprite.distance
 
         #print("hjijdfg hj ",math.degrees(math.atan((player_pos[0]-(sprite.sprite_x))  /  (player_pos[1]-(sprite.sprite_y))))%360)
-        theta = math.radians(90 - math.degrees(math.atan2((player_pos[0]-(sprite.sprite_x))  ,  (-player_pos[1]+(sprite.sprite_y))))%360)
+        bearing_point_from_player = math.radians(90 - math.degrees(math.atan2((player_pos[0]-(sprite.sprite_x))  ,  (-player_pos[1]+(sprite.sprite_y))))%360)
         #print(f"{(sprite.sprite_x-0.5*math.sin(theta),sprite.sprite_y-0.5*math.cos(theta))} {player_pos}")
         #print(block_scan.scan(map, player_pos, (sprite.sprite_x-0.5*math.sin(theta),sprite.sprite_y+0.5*math.cos(theta))))
-        n = 0
-        while not block_scan.scan(map, player_pos, (sprite.sprite_x+ ((8-n)/8) * 0.5*math.sin(theta),sprite.sprite_y+ ((8-n)/8) *0.5*math.cos(theta))) and n <= 16:
-            n+=1
+        sprite_visible_index = 0
+        while not block_scan.scan(map, player_pos, (sprite.sprite_x+ ((8-sprite_visible_index)/8) * 0.5*math.sin(bearing_point_from_player),sprite.sprite_y+ ((8-sprite_visible_index)/8) *0.5*math.cos(bearing_point_from_player))) and sprite_visible_index <= 16:
+            sprite_visible_index+=1
 
             #pass
 
@@ -366,12 +366,12 @@ def draw_sprites():
             #if block_scan.scan(map, player_pos, (sprite.sprite_x+(4/8)*0.5*math.sin(theta),sprite.sprite_y+0.25*math.cos(theta))):
                  #print("Next")
         #print(n)
-        sprite.left_point = n
+        sprite.left_point = sprite_visible_index
 
-        n=16
-        while not block_scan.scan(map, player_pos, (sprite.sprite_x+ ((8-n)/8) * 0.5*math.sin(theta),sprite.sprite_y+ ((8-n)/8) *0.5*math.cos(theta))) and n <= 16:
-            n-=1
-        sprite.right_point = n
+        sprite_visible_index=16
+        while not block_scan.scan(map, player_pos, (sprite.sprite_x+ ((8-sprite_visible_index)/8) * 0.5*math.sin(bearing_point_from_player),sprite.sprite_y+ ((8-sprite_visible_index)/8) *0.5*math.cos(bearing_point_from_player))) and sprite_visible_index >= 0:
+            sprite_visible_index-=1
+        sprite.right_point = sprite_visible_index
 
             
             #print(f"{math.degrees(theta)=}")
@@ -381,7 +381,7 @@ def draw_sprites():
 
 
 
-        if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270):
+        if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270) and sprite.left_point != sprite.right_point:
             sprite_scale_by = (20/sprite_distance) 
             screen.blit(pygame.transform.scale_by(sprites_loaded["door"],sprite_scale_by),                        #image
                         (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))-sprite_scale_by*sprite.left_point),#x start,  - the scale left point because - move it left and then fix to write spot
