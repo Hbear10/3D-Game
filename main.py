@@ -5,6 +5,7 @@ import math
 
 import maze
 import block_scan
+import Enum
 #from render import *
 
 print("Hello World!")
@@ -18,7 +19,7 @@ map = [[1,1,1,1,1,1,1,1,1],
        [1,0,0,0,1],
        [1,0,"S",0,1],
        [1,0,1,0,1],
-       [1,0,0,0,1],
+       [1,0,"B",0,1],
        [1,0,0,0,1],
        [1,0,0,0,1],
        [1,0,"W",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
@@ -34,7 +35,7 @@ def new_maze():
     map,player_pos = maze.maze_generate(11)
 
 
-raycast_column_width = 2 #The width of each pixel column, increase to improve performance as it reduces the amount of rays sent
+raycast_column_width = 2 #The width of each pixel column, increase it to improve performance as it reduces the amount of rays sent
 
 
 pygame.init()
@@ -52,6 +53,22 @@ class image():
         self.img_slices = []
         for i in range(self.width):
             self.img_slices.append(self.main_image.crop((i,0,i+1,16)))
+
+
+
+class battle_sprites():
+    def __init__(self, image_name, resolution=32):
+        self.resolution = resolution
+        self.battle_image = pygame.image.load(f"assets/{image_name}.png").convert_alpha()
+        self.battle_image = pygame.transform.scale_by(self.battle_image,(256/resolution))
+
+    def draw_enemy(self):
+        img_rect = self.battle_image.get_rect()
+        img_rect.center=(640,360)
+        screen.blit(self.battle_image,img_rect)
+        
+
+enemy = battle_sprites("FireSlimeKing")
 
 
 door = Image.open("Assets/Door.png")
@@ -73,6 +90,10 @@ class sprite_obj():
 
 sprites = []
 sprites_pos_that_can_be_rendered = []#to check for what new objects to create
+
+
+game_state = Enum.StateOfGame()
+game_state.set_value("Moving")
 
 
 
@@ -444,25 +465,34 @@ def main():
                     
 
         keys=pygame.key.get_pressed()
-        if keys[pygame.K_w] or keys[pygame.K_UP]:
-            if map[int(player_pos[1]-0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])] != 1:
-                player_pos[1]-=0.05*math.cos(math.radians(player_angle))
-            try: 
-                if map[int(player_pos[1])][int(player_pos[0]+0.15* math.sin(math.radians(player_angle)) / abs(math.sin(math.radians(player_angle))) )] != 1:
-                    player_pos[0]+=0.05*math.sin(math.radians(player_angle))
-            except:
-                pass
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            player_angle -= 5
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            player_angle += 5
-        
-        if True in [keys[pygame.K_UP],keys[pygame.K_LEFT],keys[pygame.K_RIGHT],keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_d]]:
-            draw_screen()
+        if game_state.value == "Moving":
+            if keys[pygame.K_w] or keys[pygame.K_UP]:
+                if map[int(player_pos[1]-0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])] != 1:
+                    player_pos[1]-=0.05*math.cos(math.radians(player_angle))
+                try: 
+                    if map[int(player_pos[1])][int(player_pos[0]+0.15* math.sin(math.radians(player_angle)) / abs(math.sin(math.radians(player_angle))) )] != 1:
+                        player_pos[0]+=0.05*math.sin(math.radians(player_angle))
+                except:
+                    pass
+            if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+                player_angle -= 5
+            if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+                player_angle += 5
+            
+            if True in [keys[pygame.K_UP],keys[pygame.K_LEFT],keys[pygame.K_RIGHT],keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_d]]:
+                draw_screen()
 
-        if map[int(player_pos[1])][int(player_pos[0])]=="S": #can change later so we in the centre 0.5 square
-            new_maze()
-            draw_screen()
+            if map[int(player_pos[1])][int(player_pos[0])]=="S": #can change later so we in the centre 0.5 square
+                new_maze()
+                draw_screen()
+            elif map[int(player_pos[1])][int(player_pos[0])]=="B":
+                game_state.set_value("Battle")
+            
+        elif game_state.value == "Battle":
+            print("Hi")
+            enemy.draw_enemy()
+            pygame.display.flip()
+            #screen.blit(enemy.battle_image, (128,128))
 
 
         # if turning != 0:

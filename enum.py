@@ -1,6 +1,7 @@
 #Create an Enum class (Enumerator data type used in some programming languages)
 #   An enum is a data type where it can only store set values. This makes it more secure 
 #   and less error prone than checking values on variables.
+#Python doesn't have a built in enum so I made it myself
 
 #Create the Enum Class in this file
 #Also create the different enums in this file to be imported
