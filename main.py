@@ -6,6 +6,7 @@ import math
 import maze
 import block_scan
 import Enum
+import Spritesheet
 #from render import *
 
 print("Hello World!")
@@ -19,8 +20,8 @@ map = [[1,1,1,1,1,1,1,1,1],
        [1,0,0,0,1],
        [1,0,"S",0,1],
        [1,0,1,0,1],
-       [1,0,"B",0,1],
        [1,0,0,0,1],
+       [1,0,"B",0,1],
        [1,0,0,0,1],
        [1,0,"W",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
        [1,1,1,1,1]]
@@ -42,10 +43,11 @@ pygame.init()
 screen = pygame.display.set_mode((1280,720)) #720p
 
 clock = pygame.time.Clock()#Used later to set FPS cap
+game_font = pygame.font.Font('Evil Empire.otf', 24)
 
 player_angle=0 # Direction the player is facing
 
-class image():
+class wall_image():
     def __init__(self,image_name):
         self.main_image = Image.open("Assets/"+image_name)
         self.width = (self.main_image.size)[0]
@@ -71,11 +73,41 @@ class battle_sprites():
 enemy = battle_sprites("FireSlimeKing")
 
 
+class battle_container():
+    def __init__(self,max_hp=10,max_ep=10,strength=10,defence=10):
+        self.max_hp=max_hp
+        self.hp=max_hp
+        self.max_ep = max_ep
+        self.ep=max_ep
+
+        self.strength = 10
+        self.defence = 10
+        
+
+
+class player_battle_container(battle_container):
+    pass
+
+player_stats = player_battle_container()
+
+
 door = Image.open("Assets/Door.png")
 
 sprites_loaded = {"door" : pygame.image.load("assets/Door.png").convert_alpha()}
 
+#UI images
+player_selfie = pygame.image.load("assets/PlayerSelfie.png").convert_alpha()
+player_selfie = pygame.transform.scale_by(player_selfie,4)
 
+#player_arm = pygame.image.load("assets/RoboArm.png").convert_alpha()
+#player_arm = pygame.transform.scale_by(player_arm,16)
+
+arms = Spritesheet.animation("RoboArm-Sheet",32,32,10,16).frames
+#player_arm = arms.frames[5]
+
+
+#uses ticks/count timers, +1 per loop for time tracking for animations etc.
+tick_timers = {"Battle":0}
 
 class sprite_obj():
     def __init__(self,x,y):
@@ -361,6 +393,13 @@ def raycast():
     #print(time.perf_counter()-t)
 
 
+def draw_text(surface,text,colour,left,top):
+    text_surface = game_font.render(text, True, colour)  #create text box in chosen colour
+    text_rect = text_surface.get_rect()                #
+    text_rect.left = left
+    text_rect.top = top
+    surface.blit(text_surface, text_rect) 
+
 
 def draw_sprites():
     #print(len(sprites))
@@ -420,11 +459,39 @@ def draw_screen():
     pygame.display.flip()
 
 
+def draw_battle_UI():
+    screen.blit(arms[tick_timers["Battle"]//3],(768,208))#animate in the arm
+
+    #if tick_timers["Battle"]%3==0 and tick_timers["Battle"] != 27:
+      #  draw_screen()
+
+
+
+def draw_player_stats():
+    pygame.draw.rect(screen, color="brown", rect=pygame.Rect(0,528,512,192))
+    pygame.draw.rect(screen, color="black", rect=pygame.Rect(2,530,508,188))
+
+    pygame.draw.rect(screen, color="brown", rect=pygame.Rect(30,558,132,132))
+    pygame.draw.rect(screen, color="white", rect=pygame.Rect(32,560,128,128))
+    screen.blit(player_selfie, (32,560))
+
+    draw_text(screen, "HP",(255,255,255),192,560)
+    pygame.draw.rect(screen, color="red", rect=pygame.Rect(192,590,256,32))
+
+    draw_text(screen, "EP",(255,255,255),192,624)
+    pygame.draw.rect(screen, color="blue", rect=pygame.Rect(192,654,256,32))
+
+    
+    
+
+    
+    
+
 def main():
     global player_angle, brick
     player_angle = 0
 
-    brick = image("Brick.png")
+    brick = wall_image("Brick.png")
     #print(brick.img_slices[5].show())
 
 
@@ -489,10 +556,17 @@ def main():
                 game_state.set_value("Battle")
             
         elif game_state.value == "Battle":
-            print("Hi")
+            if tick_timers["Battle"] < 27: #(10-1)*3 #refer to draw battle UI to see animation, each frame 3 ticks
+                tick_timers["Battle"] += 1
+
+            #print("Hi")
+            draw_battle_UI()
+
             enemy.draw_enemy()
+            draw_player_stats()
+            
+
             pygame.display.flip()
-            #screen.blit(enemy.battle_image, (128,128))
 
 
         # if turning != 0:
