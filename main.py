@@ -93,10 +93,10 @@ player_stats = player_battle_container()
 
 door = Image.open("Assets/Door.png")
 
-sprites_loaded = {"door" : pygame.image.load("assets/Door.png").convert_alpha()}
+sprites_loaded = {"door" : pygame.image.load("Assets/Door.png").convert_alpha()}
 
 #UI images
-player_selfie = pygame.image.load("assets/PlayerSelfie.png").convert_alpha()
+player_selfie = pygame.image.load("Assets/PlayerSelfie.png").convert_alpha()
 player_selfie = pygame.transform.scale_by(player_selfie,4)
 
 #player_arm = pygame.image.load("assets/RoboArm.png").convert_alpha()
@@ -105,9 +105,14 @@ player_selfie = pygame.transform.scale_by(player_selfie,4)
 arms = Spritesheet.animation("RoboArm-Sheet",32,32,10,16).frames
 #player_arm = arms.frames[5]
 
+#Set up the refresh background so I can quickly redraw for animations without having to rerender the entire background
+#This saves the screen as an image which I can then draw.
+pygame.image.save(screen, "Assets/saveBackground.png")
+
 
 #uses ticks/count timers, +1 per loop for time tracking for animations etc.
 tick_timers = {"Battle":0}
+menu_selected = {"Battle":0}
 
 class sprite_obj():
     def __init__(self,x,y):
@@ -393,11 +398,13 @@ def raycast():
     #print(time.perf_counter()-t)
 
 
-def draw_text(surface,text,colour,left,top):
-    text_surface = game_font.render(text, True, colour)  #create text box in chosen colour
+def draw_text(surface,text:str,colour:str,left: float,top: float,angle=0,fontSize=24):
+    text_surface = pygame.font.Font('Evil Empire.otf', fontSize).render(text, True, colour)  #create text box in chosen colour
+    text_surface = pygame.transform.rotate(text_surface,-angle)
     text_rect = text_surface.get_rect()                #
     text_rect.left = left
     text_rect.top = top
+    
     surface.blit(text_surface, text_rect) 
 
 
@@ -460,10 +467,27 @@ def draw_screen():
 
 
 def draw_battle_UI():
-    screen.blit(arms[tick_timers["Battle"]//3],(768,208))#animate in the arm
+    if tick_timers["Battle"]%3==0 and tick_timers["Battle"] != 27:
+        #draw_screen()
+        screen.blit(pygame.image.load("Assets/saveBackground.png"),(0,0))
+    
+    else:
+        pass
 
-    #if tick_timers["Battle"]%3==0 and tick_timers["Battle"] != 27:
-      #  draw_screen()
+    screen.blit(arms[tick_timers["Battle"]//3],(768,208))#animate in the arm
+    if tick_timers["Battle"] >= 27:
+        #background panel of UI - Draw options onto this
+        pygame.draw.polygon(screen,"#3ec54b", ((980,440),(1220,565),(1195,650),(950,520)) )
+
+        optionColours = ["#d4e650","#d4e650","#d4e650","#d4e650"]
+        optionColours[menu_selected["Battle"]] = "#FF0000"
+
+
+        
+        draw_text(screen,"Attack",optionColours[0],990,450,34,40)
+        draw_text(screen,"Energy",optionColours[1],1095,520,34,40)
+        draw_text(screen,"Item",optionColours[2],980,495,34,40)
+        draw_text(screen,"Guard",optionColours[3],1075,550,34,40)
 
 
 
@@ -481,10 +505,6 @@ def draw_player_stats():
     draw_text(screen, "EP",(255,255,255),192,624)
     pygame.draw.rect(screen, color="blue", rect=pygame.Rect(192,654,256,32))
 
-    
-    
-
-    
     
 
 def main():
@@ -554,6 +574,7 @@ def main():
                 draw_screen()
             elif map[int(player_pos[1])][int(player_pos[0])]=="B":
                 game_state.set_value("Battle")
+                pygame.image.save(screen, "Assets/saveBackground.png")
             
         elif game_state.value == "Battle":
             if tick_timers["Battle"] < 27: #(10-1)*3 #refer to draw battle UI to see animation, each frame 3 ticks
@@ -564,6 +585,22 @@ def main():
 
             enemy.draw_enemy()
             draw_player_stats()
+
+            # for event in pygame.event.get():
+            #     if event.type == pygame.KEYUP:
+            #         if event.key == pygame.K_w or event.key == pygame.K_UP:
+            #             if menu_selected["Battle"] < 2:
+            #                 menu_selected["Battle"] += 2
+            #             else:
+            #                 menu_selected["Battle"] -= 2
+            # if keys[pygame.K_a] or keys[pygame.K_LEFT]:
+            #     player_angle -= 5
+            # if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
+            #     player_angle += 5
+            
+            # if True in [keys[pygame.K_UP],keys[pygame.K_LEFT],keys[pygame.K_RIGHT],keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_d]]:
+            #     draw_battle_UI()
+
             
 
             pygame.display.flip()
