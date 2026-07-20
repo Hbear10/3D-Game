@@ -77,7 +77,7 @@ class battle_container():
     def __init__(self,max_hp=10,physicalStrength=10,defence=10,speed=10,fireStrength=5,iceStrength=5,earthStrength=5,fireDefence=5,iceDefence=5,earthDefence=5):
         self.max_hp=max_hp
         self.hp=max_hp
-        self.strength = physicalStrength
+        self.physicalStrength = physicalStrength
         self.defence = defence
         self.speed = speed
         self.fireStrength = fireStrength
@@ -88,13 +88,20 @@ class battle_container():
         self.earthDefence = earthDefence
         
 class player_battle_container(battle_container):
-    def __init__(self, max_hp=10, max_ep=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items=[]):
+    def __init__(self, max_hp=10, max_ep=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items=[],energyMoves=[0,0,0,0]):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, eartStrength, fireDefence, iceDefence, earthDefence)
         self.max_ep = max_ep
         self.ep=max_ep
         self.relics=relics
         self.specialRelics = specialRelics
         self.items = items
+        self.energyMoves = energyMoves
+
+    def set_energyMoves(self,move1,move2,move3,move4):
+        self.energyMoves[0] = move1
+        self.energyMoves[1] = move2
+        self.energyMoves[2] = move3
+        self.energyMoves[3] = move4
 
 
 class enemy_battle_container(battle_container):
@@ -104,10 +111,23 @@ class enemy_battle_container(battle_container):
         self.moves=moves
 
 
+class energy_move():
+    def __init__(self,name,physicalValue,fireValue,earthValue,iceVale,healValue,EPcost):
+        self.name = name
+        self.physicalValue = physicalValue
+        self.fireValue = fireValue
+        self.earthValue = earthValue
+        self.iceValue = iceVale
+        self.healValue = healValue
+        self.EPcost = EPcost
+
+
+
+
 player_stats = player_battle_container()
-enemy_obj = enemy_battle_container(name="King Fire Slime")
-#white is player, black is enemy
-turnOrder = ["#FFFFFF","#FFFFFF","#000000","#FFFFFF","#000000"]
+enemy_obj = enemy_battle_container(name="King Fire Slime",max_hp=25)
+#blue is player, red is enemy
+turnOrder = ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 
 door = Image.open("Assets/Door.png")
 
@@ -130,7 +150,8 @@ pygame.image.save(screen, "Assets/saveBackground.png")
 
 #uses ticks/count timers, +1 per loop for time tracking for animations etc.
 tick_timers = {"Battle":0}
-menu_selected = {"Battle":0}
+menu_selected = {"Battle":0, "Battle-Energy":0}
+playerTurn = True
 
 class sprite_obj():
     def __init__(self,x,y):
@@ -141,7 +162,29 @@ class sprite_obj():
         self.left_point = 0
         self.right_point = 16
 
+energy_moves = []
+# energy_moves.append(energy_move("Fireball",0,20,0,0,0,5))
+# energy_moves.append(energy_move("Earthball",0,0,20,0,0,5))
+# energy_moves.append(energy_move("Iceball",0,0,0,20,0,5))
+# energy_moves.append(energy_move("Heal",0,0,0,0,10,5))
 
+
+def load_energy_moves():
+    ls = []
+    file = open("Data/energyMoves.txt","r")
+
+    moves = file.readlines()
+    for i in moves:
+        i = i.split(",")
+        ls.append(energy_move(i[0],int(i[1]),int(i[2]),int(i[3]),int(i[4]),int(i[5]),int(i[6])))
+
+    return ls
+
+
+energy_moves = load_energy_moves()
+print(energy_moves)
+
+player_stats.set_energyMoves(energy_moves[0],energy_moves[1],energy_moves[2],energy_moves[3])
 
 sprites = []
 sprites_pos_that_can_be_rendered = []#to check for what new objects to create
@@ -149,6 +192,12 @@ sprites_pos_that_can_be_rendered = []#to check for what new objects to create
 
 game_state = Enum.StateOfGame()
 game_state.set_value("Moving")
+
+
+
+
+
+
 
 
 
@@ -422,6 +471,13 @@ def calculate_turn_order(player,enemy):
     return ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 
 
+def deal_damage(user,opponent):
+    damage = int(user.physicalStrength*1.5-opponent.defence)
+    if damage < 0:
+        damage = 0
+    opponent.hp -= damage
+
+
 def draw_text(surface,text:str,colour:str,left: float,top: float,angle=0,fontSize=24,centre=False):
     text_surface = pygame.font.Font('Evil Empire.otf', fontSize).render(text, True, colour)  #create text box in chosen colour
     text_surface = pygame.transform.rotate(text_surface,-angle)
@@ -493,12 +549,12 @@ def draw_screen():
 
 
 def draw_battle_UI():
-    if tick_timers["Battle"]%3==0 and tick_timers["Battle"] != 27:
+    #if tick_timers["Battle"]%3==0 and tick_timers["Battle"] != 27:
         #draw_screen()
-        screen.blit(pygame.image.load("Assets/saveBackground.png"),(0,0))
+    screen.blit(pygame.image.load("Assets/saveBackground.png"),(0,0))
     
-    else:
-        pass
+    #else:
+        #pass
 
     screen.blit(arms[tick_timers["Battle"]//3],(768,208))#animate in the arm
     if tick_timers["Battle"] >= 27:
@@ -510,7 +566,7 @@ def draw_battle_UI():
 
         draw_text(screen,"Attack",optionColours[0],990,450,34,40)
         draw_text(screen,"Energy",optionColours[1],1095,520,34,40)
-        draw_text(screen,"Item",optionColours[2],980,495,34,40)
+        draw_text(screen,"Item",optionColours[2],975,485,34,40)
         draw_text(screen,"Guard",optionColours[3],1075,550,34,40)
 
     pygame.draw.rect(screen,"brown",pygame.Rect(0,0,100,420))
@@ -523,8 +579,43 @@ def draw_battle_UI():
     pygame.draw.polygon(screen, turnOrder[4],((48,336),(80,368),(48,400),(16,368)))
 
 
+def draw_battle_energy_UI():
+    screen.blit(arms[9],(768,208))#arm
 
-#player icon
+    #background panel of UI - Draw options onto this
+    pygame.draw.polygon(screen,"#3ec54b", ((980,440),(1220,565),(1195,650),(950,520)) )
+
+    optionColours = ["#d4e650","#d4e650","#d4e650","#d4e650"]
+    optionColours[menu_selected["Battle-Energy"]] = "#FF0000"
+
+    draw_text(screen,player_stats.energyMoves[0].name,optionColours[0],990,450,34,30)
+    draw_text(screen,player_stats.energyMoves[1].name,optionColours[1],1095,520,34,30)
+    draw_text(screen,player_stats.energyMoves[2].name,optionColours[2],975,485,34,30)
+    draw_text(screen,player_stats.energyMoves[3].name,optionColours[3],1075,550,34,30)
+
+    pygame.draw.rect(screen, "brown",pygame.Rect(1020,160,200,200))
+    pygame.draw.rect(screen, "#000000",pygame.Rect(1022,162,196,196))
+
+    #selected energy move name
+    selectedMove = player_stats.energyMoves[menu_selected["Battle-Energy"]]
+    draw_text(screen, selectedMove.name,"#FFFFFF",1120,185,centre=True)
+
+    draw_text(screen,f"Physcial:    {selectedMove.physicalValue}","#FFFFFF",1030,205)
+    draw_text(screen,f"Fire:            {selectedMove.fireValue}","#FFFFFF",1030,230)
+    draw_text(screen,f"Earth:         {selectedMove.earthValue}","#FFFFFF",1030,255)
+    draw_text(screen,f"Ice:              {selectedMove.iceValue}","#FFFFFF",1030,280)
+    draw_text(screen,f"Heal:           {selectedMove.healValue}","#FFFFFF",1030,305)
+    draw_text(screen,f"EP Cost:       {selectedMove.EPcost}","#FFFFFF",1030,330)
+
+
+
+
+
+
+
+
+
+#player icon player health etc.
 def draw_player_stats():
     pygame.draw.rect(screen, color="brown", rect=pygame.Rect(0,528,512,192))
     pygame.draw.rect(screen, color="black", rect=pygame.Rect(2,530,508,188))
@@ -534,13 +625,17 @@ def draw_player_stats():
     screen.blit(player_selfie, (32,560))
 
     draw_text(screen, "HP",(255,255,255),192,560)
-    pygame.draw.rect(screen, color="red", rect=pygame.Rect(192,590,256,32))
+    pygame.draw.rect(screen, color="#550000", rect=pygame.Rect(192,590,256,32))
+    pygame.draw.rect(screen, color="red", rect=pygame.Rect(192,590,256*(player_stats.hp/player_stats.max_hp),32))
     draw_text(screen,f"{player_stats.hp}/{player_stats.max_hp}","#FFFFFF",320,606,centre=True)
 
     draw_text(screen, "EP",(255,255,255),192,624)
-    pygame.draw.rect(screen, color="blue", rect=pygame.Rect(192,654,256,32))
+    pygame.draw.rect(screen, color="#000055", rect=pygame.Rect(192,654,256,32))
+    pygame.draw.rect(screen, color="#0000FF", rect=pygame.Rect(192,654,256*(player_stats.ep/player_stats.max_ep),32))
     draw_text(screen,f"{player_stats.ep}/{player_stats.max_ep}","#FFFFFF",320,670,centre=True)
 
+
+#enemy name, hp
 def draw_enemy_stats():
     pygame.draw.rect(screen, color="brown", rect=pygame.Rect(440,90,400,120))
     pygame.draw.rect(screen, color="black", rect=pygame.Rect(442,92,396,116))
@@ -548,8 +643,12 @@ def draw_enemy_stats():
     draw_text(screen, enemy_obj.name, "#FFFFFF", 640,125,fontSize=30,centre=True)
 
     draw_text(screen, "HP",(255,255,255),450,150)
-    pygame.draw.rect(screen, color="red", rect=pygame.Rect(485,150,335,32))
+
+    pygame.draw.rect(screen, color="#550000", rect=pygame.Rect(485,150,335,32))
+    pygame.draw.rect(screen, color="red", rect=pygame.Rect(485,150,335*(enemy_obj.hp/enemy_obj.max_hp),32))
+    
     draw_text(screen,f"{str(enemy_obj.hp)}/{str(enemy_obj.max_hp)}","#FFFFFF",640,166,0,centre=True)
+
 
 def main():
     global player_angle, brick, turnOrder
@@ -569,34 +668,7 @@ def main():
     #turning = 0
     running = True
 
-    while running:
-        
-        # for event in pygame.event.get():
-        #     if event.type == pygame.QUIT:
-        #         running = False
-        #     if event.type == pygame.KEYDOWN:
-                
-                # if event.key == pygame.K_w or event.key == pygame.K_UP:
-                #     player_angle_confined = player_angle%360 #angle confined to 0<=theta<=360
-                #     if player_angle_confined == 0:
-                #         pass
-                #         #player_pos[1]-=0.25
-                #     elif player_angle_confined == 90:
-                #         player_pos[0]+=0.25
-                #     elif player_angle_confined == 180:
-                #         player_pos[1]+=0.25
-                #     elif player_angle_confined == 270:
-                #         player_pos[0]-=0.25
-                #     draw_screen()
-                # if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                #     if turning == 0:
-                #         turning =-5
-                        
-                #if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                    #if turning == 0:
-                        #turning = 5
-                # pass
-                    
+    while running:             
 
         keys=pygame.key.get_pressed()
         if game_state.value == "Moving":
@@ -657,9 +729,18 @@ def main():
                         else:
                             menu_selected["Battle"] -= 2
 
-
-
-
+                    if playerTurn:
+                        if event.key == pygame.K_SPACE:
+                            if menu_selected["Battle"] == 0:#attack
+                                deal_damage(player_stats,enemy_obj)
+                            elif menu_selected["Battle"] == 1:#energy
+                                game_state.set_value("Battle-Energy")
+                            elif menu_selected["Battle"] == 2:#item
+                                player_stats.hp+=2
+                            elif menu_selected["Battle"] == 3:#guard
+                                player_stats.hp -= 2
+                    else:
+                        pass
 
 
             if tick_timers["Battle"] < 27: #(10-1)*3 #refer to draw battle UI to see animation, each frame 3 ticks
@@ -685,6 +766,72 @@ def main():
 
             pygame.display.flip()
 
+        elif game_state.value == "Battle-Energy":
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_BACKSPACE:
+                        game_state.set_value("Battle")
+
+                    if event.key == pygame.K_w or event.key == pygame.K_UP:
+                        # print("HI")
+                        if menu_selected["Battle-Energy"] < 2:
+                            menu_selected["Battle-Energy"] += 2
+                        else:
+                            menu_selected["Battle-Energy"] -= 2
+                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                        if menu_selected["Battle-Energy"] % 2==0:
+                            menu_selected["Battle-Energy"]+=1
+                        else:
+                            menu_selected["Battle-Energy"]-=1
+
+                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                        if menu_selected["Battle-Energy"] % 2==0:
+                            menu_selected["Battle-Energy"]+=1
+                        else:
+                            menu_selected["Battle-Energy"]-=1
+                    if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                        # print("HI")
+                        if menu_selected["Battle-Energy"] < 2:
+                            menu_selected["Battle-Energy"] += 2
+                        else:
+                            menu_selected["Battle-Energy"] -= 2
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+                        game_state.set_value("Battle")
+                        move = player_stats.energyMoves[menu_selected["Battle-Energy"]]
+                        energyDamage=0
+
+                        if move.physicalValue != 0:
+                            tempDamage = (move.physicalValue+player_stats.physicalStrength)*1.25-enemy_obj.defence
+                            if tempDamage > 0:
+                                energyDamage+=tempDamage
+                        if move.fireValue != 0:
+                            tempDamage = (move.fireValue+player_stats.fireStrength)*1.25-(enemy_obj.defence+enemy_obj.fireDefence)
+                            if tempDamage > 0:
+                                energyDamage+=tempDamage
+                        if move.earthValue != 0:
+                            tempDamage = (move.earthValue+player_stats.earthStrength)*1.25-(enemy_obj.defence+enemy_obj.earthDefence)
+                            if tempDamage > 0:
+                                energyDamage+=tempDamage
+                        if move.iceValue != 0:
+                            tempDamage = (move.iceValue+player_stats.iceStrength)*1.25-(enemy_obj.defence+enemy_obj.iceDefence)
+                            if tempDamage > 0:
+                                energyDamage+=tempDamage
+
+                        player_stats.hp += move.healValue
+                        player_stats.ep -= move.EPcost
+                        enemy_obj.hp -= int(energyDamage)
+
+
+
+                    
+
+            draw_battle_energy_UI()
+            draw_enemy_stats()
+            draw_player_stats()
+
+            pygame.display.flip()
 
         # if turning != 0:
         #     player_angle+=turning
