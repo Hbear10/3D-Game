@@ -74,22 +74,40 @@ enemy = battle_sprites("FireSlimeKing")
 
 
 class battle_container():
-    def __init__(self,max_hp=10,max_ep=10,strength=10,defence=10):
+    def __init__(self,max_hp=10,physicalStrength=10,defence=10,speed=10,fireStrength=5,iceStrength=5,earthStrength=5,fireDefence=5,iceDefence=5,earthDefence=5):
         self.max_hp=max_hp
         self.hp=max_hp
+        self.strength = physicalStrength
+        self.defence = defence
+        self.speed = speed
+        self.fireStrength = fireStrength
+        self.iceStrength = iceStrength
+        self.earthStrength = earthStrength
+        self.fireDefence = fireDefence
+        self.iceDefence = iceDefence
+        self.earthDefence = earthDefence
+        
+class player_battle_container(battle_container):
+    def __init__(self, max_hp=10, max_ep=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items=[]):
+        super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, eartStrength, fireDefence, iceDefence, earthDefence)
         self.max_ep = max_ep
         self.ep=max_ep
+        self.relics=relics
+        self.specialRelics = specialRelics
+        self.items = items
 
-        self.strength = 10
-        self.defence = 10
-        
 
+class enemy_battle_container(battle_container):
+    def __init__(self, max_hp=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, earthStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,name="NULL",moves=[]):
+        super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, earthStrength, fireDefence, iceDefence, earthDefence)
+        self.name=name
+        self.moves=moves
 
-class player_battle_container(battle_container):
-    pass
 
 player_stats = player_battle_container()
-
+enemy_obj = enemy_battle_container(name="King Fire Slime")
+#white is player, black is enemy
+turnOrder = ["#FFFFFF","#FFFFFF","#000000","#FFFFFF","#000000"]
 
 door = Image.open("Assets/Door.png")
 
@@ -398,12 +416,21 @@ def raycast():
     #print(time.perf_counter()-t)
 
 
-def draw_text(surface,text:str,colour:str,left: float,top: float,angle=0,fontSize=24):
+
+def calculate_turn_order(player,enemy):
+    #TEMPORARY
+    return ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
+
+
+def draw_text(surface,text:str,colour:str,left: float,top: float,angle=0,fontSize=24,centre=False):
     text_surface = pygame.font.Font('Evil Empire.otf', fontSize).render(text, True, colour)  #create text box in chosen colour
     text_surface = pygame.transform.rotate(text_surface,-angle)
-    text_rect = text_surface.get_rect()                #
-    text_rect.left = left
-    text_rect.top = top
+    text_rect = text_surface.get_rect()
+    if centre==True:
+        text_rect.center=(left,top)
+    else:                #
+        text_rect.left = left
+        text_rect.top = top
     
     surface.blit(text_surface, text_rect) 
 
@@ -456,7 +483,6 @@ def draw_sprites():
                         (sprite_scale_by*sprite.left_point,0,(sprite.right_point)*sprite_scale_by,16*sprite_scale_by))
     
 
-
 def draw_screen():
     screen.fill("dark grey")
     pygame.draw.rect(screen,(34,34,34), pygame.Rect(0,0,1280,360))
@@ -482,15 +508,23 @@ def draw_battle_UI():
         optionColours = ["#d4e650","#d4e650","#d4e650","#d4e650"]
         optionColours[menu_selected["Battle"]] = "#FF0000"
 
-
-        
         draw_text(screen,"Attack",optionColours[0],990,450,34,40)
         draw_text(screen,"Energy",optionColours[1],1095,520,34,40)
         draw_text(screen,"Item",optionColours[2],980,495,34,40)
         draw_text(screen,"Guard",optionColours[3],1075,550,34,40)
 
+    pygame.draw.rect(screen,"brown",pygame.Rect(0,0,100,420))
+    pygame.draw.rect(screen,"#000000",pygame.Rect(0,0,98,418))
+    # pygame.draw.polygon(screen, "#000000",((48,14),(82,48),(48,82),(14,48)))
+    pygame.draw.polygon(screen, turnOrder[0],((48,16),(80,48),(48,80),(16,48)))
+    pygame.draw.polygon(screen, turnOrder[1],((48,96),(80,128),(48,160),(16,128)))
+    pygame.draw.polygon(screen, turnOrder[2],((48,176),(80,208),(48,240),(16,208)))
+    pygame.draw.polygon(screen, turnOrder[3],((48,256),(80,288),(48,320),(16,288)))
+    pygame.draw.polygon(screen, turnOrder[4],((48,336),(80,368),(48,400),(16,368)))
 
 
+
+#player icon
 def draw_player_stats():
     pygame.draw.rect(screen, color="brown", rect=pygame.Rect(0,528,512,192))
     pygame.draw.rect(screen, color="black", rect=pygame.Rect(2,530,508,188))
@@ -501,15 +535,27 @@ def draw_player_stats():
 
     draw_text(screen, "HP",(255,255,255),192,560)
     pygame.draw.rect(screen, color="red", rect=pygame.Rect(192,590,256,32))
+    draw_text(screen,f"{player_stats.hp}/{player_stats.max_hp}","#FFFFFF",320,606,centre=True)
 
     draw_text(screen, "EP",(255,255,255),192,624)
     pygame.draw.rect(screen, color="blue", rect=pygame.Rect(192,654,256,32))
+    draw_text(screen,f"{player_stats.ep}/{player_stats.max_ep}","#FFFFFF",320,670,centre=True)
 
-    
+def draw_enemy_stats():
+    pygame.draw.rect(screen, color="brown", rect=pygame.Rect(440,90,400,120))
+    pygame.draw.rect(screen, color="black", rect=pygame.Rect(442,92,396,116))
+
+    draw_text(screen, enemy_obj.name, "#FFFFFF", 640,125,fontSize=30,centre=True)
+
+    draw_text(screen, "HP",(255,255,255),450,150)
+    pygame.draw.rect(screen, color="red", rect=pygame.Rect(485,150,335,32))
+    draw_text(screen,f"{str(enemy_obj.hp)}/{str(enemy_obj.max_hp)}","#FFFFFF",640,166,0,centre=True)
 
 def main():
-    global player_angle, brick
+    global player_angle, brick, turnOrder
+
     player_angle = 0
+    turnOrder = calculate_turn_order(player_stats,enemy_obj)
 
     brick = wall_image("Brick.png")
     #print(brick.img_slices[5].show())
@@ -525,10 +571,11 @@ def main():
 
     while running:
         
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
+        # for event in pygame.event.get():
+        #     if event.type == pygame.QUIT:
+        #         running = False
+        #     if event.type == pygame.KEYDOWN:
+                
                 # if event.key == pygame.K_w or event.key == pygame.K_UP:
                 #     player_angle_confined = player_angle%360 #angle confined to 0<=theta<=360
                 #     if player_angle_confined == 0:
@@ -548,11 +595,15 @@ def main():
                 #if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
                     #if turning == 0:
                         #turning = 5
-                pass
+                # pass
                     
 
         keys=pygame.key.get_pressed()
         if game_state.value == "Moving":
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+
             if keys[pygame.K_w] or keys[pygame.K_UP]:
                 if map[int(player_pos[1]-0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])] != 1:
                     player_pos[1]-=0.05*math.cos(math.radians(player_angle))
@@ -577,6 +628,40 @@ def main():
                 pygame.image.save(screen, "Assets/saveBackground.png")
             
         elif game_state.value == "Battle":
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_w or event.key == pygame.K_UP:
+                        # print("HI")
+                        if menu_selected["Battle"] < 2:
+                            menu_selected["Battle"] += 2
+                        else:
+                            menu_selected["Battle"] -= 2
+                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                        if menu_selected["Battle"] % 2==0:
+                            menu_selected["Battle"]+=1
+                        else:
+                            menu_selected["Battle"]-=1
+
+                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                        if menu_selected["Battle"] % 2==0:
+                            menu_selected["Battle"]+=1
+                        else:
+                            menu_selected["Battle"]-=1
+                    if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                        # print("HI")
+                        if menu_selected["Battle"] < 2:
+                            menu_selected["Battle"] += 2
+                        else:
+                            menu_selected["Battle"] -= 2
+
+
+
+
+
+
             if tick_timers["Battle"] < 27: #(10-1)*3 #refer to draw battle UI to see animation, each frame 3 ticks
                 tick_timers["Battle"] += 1
 
@@ -585,14 +670,9 @@ def main():
 
             enemy.draw_enemy()
             draw_player_stats()
+            draw_enemy_stats()
 
-            # for event in pygame.event.get():
-            #     if event.type == pygame.KEYUP:
-            #         if event.key == pygame.K_w or event.key == pygame.K_UP:
-            #             if menu_selected["Battle"] < 2:
-            #                 menu_selected["Battle"] += 2
-            #             else:
-            #                 menu_selected["Battle"] -= 2
+            
             # if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             #     player_angle -= 5
             # if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
