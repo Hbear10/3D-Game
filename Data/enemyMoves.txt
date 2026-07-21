@@ -1,0 +1,2 @@
+Fireball, Fire, 20
+Fireblast, Fire, 50

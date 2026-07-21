@@ -1,6 +1,7 @@
 import pygame
 from PIL import Image
 import math
+import random
 #import time
 
 import maze
@@ -87,8 +88,9 @@ class battle_container():
         self.iceDefence = iceDefence
         self.earthDefence = earthDefence
         
+
 class player_battle_container(battle_container):
-    def __init__(self, max_hp=10, max_ep=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items=[],energyMoves=[0,0,0,0]):
+    def __init__(self, max_hp=10, max_ep=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items={},energyMoves=[0,0,0,0]):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, eartStrength, fireDefence, iceDefence, earthDefence)
         self.max_ep = max_ep
         self.ep=max_ep
@@ -103,12 +105,28 @@ class player_battle_container(battle_container):
         self.energyMoves[2] = move3
         self.energyMoves[3] = move4
 
+    def add_item(self, item, quantity):
+        self.items[item] =  quantity
+
 
 class enemy_battle_container(battle_container):
-    def __init__(self, max_hp=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, earthStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,name="NULL",moves=[]):
+    def __init__(self, max_hp=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, earthStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,name="NULL",moves={}):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, earthStrength, fireDefence, iceDefence, earthDefence)
         self.name=name
         self.moves=moves
+
+    def make_move(self):
+        randVal = random.random()
+        # print(randVal)
+        weightCounter=0
+        moveCounter = 0
+        while weightCounter < randVal:
+            weightCounter += list(self.moves.values())[moveCounter]
+            moveCounter+=1
+        moveCounter-=1
+        # print(list(self.moves.keys())[moveCounter].name)
+        move = list(self.moves.keys())[moveCounter]
+        print(move)
 
 
 class energy_move():
@@ -122,6 +140,18 @@ class energy_move():
         self.EPcost = EPcost
 
 
+class item():
+    def __init__(self,name,effectType,potency):
+        self.name = name
+        self.effectType = effectType
+        self.potency = potency
+
+
+class enemy_move():
+    def __init__(self,name,damageType,value):
+        self.name=name
+        self.damageType=damageType
+        self.value = value
 
 
 player_stats = player_battle_container()
@@ -173,18 +203,59 @@ def load_energy_moves():
     ls = []
     file = open("Data/energyMoves.txt","r")
 
-    moves = file.readlines()
+    moves = file.readlines()#
+    file.close()
     for i in moves:
         i = i.split(",")
         ls.append(energy_move(i[0],int(i[1]),int(i[2]),int(i[3]),int(i[4]),int(i[5]),int(i[6])))
 
     return ls
 
+def load_items():
+    ls=[]
+    file=open("Data/items.txt","r")
+
+    items_file = file.readlines()
+    file.close()
+    for i in items_file:
+        i = i.split(",")
+        ls.append(item(*i))
+
+    return ls
+
+def load_enemy_moves():
+    ls=[]
+    file=open("Data/enemyMoves.txt","r")
+
+    items_file = file.readlines()
+    file.close()
+    for i in items_file:
+        i = i.split(",")
+        ls.append(enemy_move(*i))
+
+    return ls
+
 
 energy_moves = load_energy_moves()
-print(energy_moves)
-
+# print(energy_moves)
 player_stats.set_energyMoves(energy_moves[0],energy_moves[1],energy_moves[2],energy_moves[3])
+
+
+items = load_items()
+player_stats.add_item(items[0],5)
+# print(player_stats.items)
+
+
+enemy_moves = load_enemy_moves()
+enemy_obj.moves = {enemy_moves[0]:0.7,enemy_moves[1]:0.3}
+
+enemy_obj.make_move()
+enemy_obj.make_move()
+enemy_obj.make_move()
+enemy_obj.make_move()
+enemy_obj.make_move()
+
+
 
 sprites = []
 sprites_pos_that_can_be_rendered = []#to check for what new objects to create
