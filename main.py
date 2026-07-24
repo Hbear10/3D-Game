@@ -820,6 +820,15 @@ def draw_enemy_stats():
     draw_text(screen,f"{str(enemy_obj.hp)}/{str(enemy_obj.max_hp)}","#FFFFFF",640,166,0,centre=True)
 
 
+#If player or enemy health goes over their max HP sets back down to max HP
+def check_over_max_hp():
+    if player_stats.hp > player_stats.max_hp:
+        player_stats.hp = player_stats.max_hp
+    
+    if enemy_obj.hp > enemy_obj.max_hp:
+        enemy_obj.hp = enemy_obj.max_hp
+
+
 def main():
     global player_angle, brick, turnOrder, playerTurn
 
@@ -991,38 +1000,48 @@ def main():
                         else:
                             menu_selected["Battle-Energy"] -= 2
                     if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
-                        game_state.set_value("Battle")
-                        playerTurn = False
-                        update_turn_counters()
-                        determine_turn()
+                        
 
                         move = player_stats.energyMoves[menu_selected["Battle-Energy"]]
-                        energyDamage=0
 
-                        if move.physicalValue != 0:
-                            tempDamage = (move.physicalValue+player_stats.physicalStrength)*1.25-enemy_obj.defence
-                            if tempDamage > 0:
-                                energyDamage+=tempDamage
-                        if move.fireValue != 0:
-                            tempDamage = (move.fireValue+player_stats.fireStrength)*1.25-(enemy_obj.defence+enemy_obj.fireDefence)
-                            if tempDamage > 0:
-                                energyDamage+=tempDamage
-                        if move.earthValue != 0:
-                            tempDamage = (move.earthValue+player_stats.earthStrength)*1.25-(enemy_obj.defence+enemy_obj.earthDefence)
-                            if tempDamage > 0:
-                                energyDamage+=tempDamage
-                        if move.iceValue != 0:
-                            tempDamage = (move.iceValue+player_stats.iceStrength)*1.25-(enemy_obj.defence+enemy_obj.iceDefence)
-                            if tempDamage > 0:
-                                energyDamage+=tempDamage
 
-                        player_stats.hp += move.healValue
-                        player_stats.ep -= move.EPcost
-                        enemy_obj.hp -= int(energyDamage)
+                        if player_stats.ep >= move.EPcost:
+                            game_state.set_value("Battle")
+                            playerTurn = False
+                            update_turn_counters()
+                            determine_turn()
+
+                            player_stats.ep -= move.EPcost
+
+                            energyDamage=0
+
+                            if move.physicalValue != 0:
+                                tempDamage = (move.physicalValue+player_stats.physicalStrength)*1.25-enemy_obj.defence
+                                if tempDamage > 0:
+                                    energyDamage+=tempDamage
+                            if move.fireValue != 0:
+                                tempDamage = (move.fireValue+player_stats.fireStrength)*1.25-(enemy_obj.defence+enemy_obj.fireDefence)
+                                if tempDamage > 0:
+                                    energyDamage+=tempDamage
+                            if move.earthValue != 0:
+                                tempDamage = (move.earthValue+player_stats.earthStrength)*1.25-(enemy_obj.defence+enemy_obj.earthDefence)
+                                if tempDamage > 0:
+                                    energyDamage+=tempDamage
+                            if move.iceValue != 0:
+                                tempDamage = (move.iceValue+player_stats.iceStrength)*1.25-(enemy_obj.defence+enemy_obj.iceDefence)
+                                if tempDamage > 0:
+                                    energyDamage+=tempDamage
+
+                            player_stats.hp += move.healValue
+                            enemy_obj.hp -= int(energyDamage)
+
+                        else:
+                            pass#add error noise rahah type noise
 
 
 
                     
+            check_over_max_hp()
 
             draw_battle_energy_UI()
             draw_enemy_stats()
@@ -1077,6 +1096,7 @@ def main():
 
     
 
+            check_over_max_hp()
 
             if len(player_stats.items): #if items isnt empty
                 draw_battle_item_UI()
