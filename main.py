@@ -211,6 +211,7 @@ tick_timers = {"Battle":0}
 menu_selected = {"Battle":0, "Battle-Energy":0,"Battle-Item":0}
 playerTurn = True
 turnCounter = {"Player":0,"Enemy":0}
+displayInv = False
 
 class sprite_obj():
     def __init__(self,x,y):
@@ -695,12 +696,30 @@ def draw_sprites():
                         (sprite_scale_by*sprite.left_point,0,(sprite.right_point)*sprite_scale_by,16*sprite_scale_by))
     
 
+def draw_inventory_roaming():
+    inv = player_stats.items
+    items = list(inv.keys())
+    
+
+    pygame.draw.rect(screen, "brown",pygame.Rect(50,50,200,25+len(items)*25))
+    pygame.draw.rect(screen, "#000000",pygame.Rect(52,52,196,21+len(items)*25))
+
+    draw_text(screen, "Inventory","#FFFFFF",150,65,centre=True)
+
+    for i in range(len(items)):
+        draw_text(screen,f"{items[i].name}       x{inv[items[i]]}   ","#FFFFFF",60,75+i*25)
+
+
 def draw_screen():
     screen.fill("dark grey")
     pygame.draw.rect(screen,(34,34,34), pygame.Rect(0,0,1280,360))
     raycast()
     #print(sprites)
     draw_sprites()
+
+    if displayInv == True:
+        draw_inventory_roaming()
+
     pygame.display.flip()
 
 
@@ -784,7 +803,6 @@ def draw_battle_item_UI():
     draw_text(screen,f"Amount:    {player_stats.items[selectedItem]}","#FFFFFF",1030,255)
 
 
-
 #player icon player health etc.
 def draw_player_stats():
     pygame.draw.rect(screen, color="brown", rect=pygame.Rect(0,528,512,192))
@@ -830,7 +848,7 @@ def check_over_max_hp():
 
 
 def main():
-    global player_angle, brick, turnOrder, playerTurn
+    global player_angle, brick, turnOrder, playerTurn, displayInv
 
     player_angle = 0
     turnOrder = calculate_turn_order(player_stats,enemy_obj)
@@ -848,12 +866,17 @@ def main():
     #turning = 0
     running = True
 
-    while running:           
+    while running:        
+
         keys=pygame.key.get_pressed()
         if game_state.value == "Moving":
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_o or event.key == pygame.K_i:#toggle inventory
+                        displayInv = not displayInv #flip variable
+                        draw_screen()
 
             if keys[pygame.K_w] or keys[pygame.K_UP]:
                 if map[int(player_pos[1]-0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])] != 1:
@@ -877,7 +900,7 @@ def main():
             elif map[int(player_pos[1])][int(player_pos[0])]=="B":
                 game_state.set_value("Battle")
                 pygame.image.save(screen, "Assets/saveBackground.png")
-            
+   
         elif game_state.value == "Battle":
             player_stats.cancel_guard()
 
