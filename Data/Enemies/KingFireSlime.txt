@@ -1,0 +1,13 @@
+King Fire Slime
+100
+10
+10
+50
+5
+5
+5
+5
+5
+5
+Fireball,0.7
+Fireblast,0.3

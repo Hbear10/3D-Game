@@ -1,3 +1,3 @@
-Potion, heal, 30
-Super Potion, heal, 100
-Bomb, damage, 25
+Potion,Heal,30
+Super Potion,Heal,100
+Bomb,Damage,25

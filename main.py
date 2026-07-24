@@ -75,7 +75,7 @@ enemy = battle_sprites("FireSlimeKing")
 
 
 class battle_container():
-    def __init__(self,max_hp=10,physicalStrength=10,defence=10,speed=10,fireStrength=5,iceStrength=5,earthStrength=5,fireDefence=5,iceDefence=5,earthDefence=5):
+    def __init__(self,max_hp=100,physicalStrength=10,defence=10,speed=10,fireStrength=5,iceStrength=5,earthStrength=5,fireDefence=5,iceDefence=5,earthDefence=5):
         self.max_hp=max_hp
         self.hp=max_hp
         self.physicalStrength = physicalStrength
@@ -90,7 +90,7 @@ class battle_container():
         
 
 class player_battle_container(battle_container):
-    def __init__(self, max_hp=10, max_ep=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items={},energyMoves=[0,0,0,0]):
+    def __init__(self, max_hp=100, max_ep=25, physicalStrength=10, defence=10, speed=80, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items={},energyMoves=[0,0,0,0]):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, eartStrength, fireDefence, iceDefence, earthDefence)
         self.max_ep = max_ep
         self.ep=max_ep
@@ -98,6 +98,7 @@ class player_battle_container(battle_container):
         self.specialRelics = specialRelics
         self.items = items
         self.energyMoves = energyMoves
+        self.guarding = 1
 
     def set_energyMoves(self,move1,move2,move3,move4):
         self.energyMoves[0] = move1
@@ -108,14 +109,21 @@ class player_battle_container(battle_container):
     def add_item(self, item, quantity):
         self.items[item] =  quantity
 
+    
+    def guard(self):
+        self.guarding = 2
+
+    def cancel_guard(self):
+        self.guarding = 1
+
 
 class enemy_battle_container(battle_container):
-    def __init__(self, max_hp=10, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, earthStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,name="NULL",moves={}):
+    def __init__(self, max_hp=100, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, earthStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,name="NULL",moves={}):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, earthStrength, fireDefence, iceDefence, earthDefence)
         self.name=name
         self.moves=moves
 
-    def make_move(self):
+    def make_move(self,opponent):
         randVal = random.random()
         # print(randVal)
         weightCounter=0
@@ -126,7 +134,27 @@ class enemy_battle_container(battle_container):
         moveCounter-=1
         # print(list(self.moves.keys())[moveCounter].name)
         move = list(self.moves.keys())[moveCounter]
-        print(move)
+        # print(move)
+        damage = 0
+        if move.damageType == "Physical":
+            damage = int((enemy_obj.physicalStrength+move.value)*0.75-opponent.defence)
+        elif move.damageType == "Fire":
+            damage = int((enemy_obj.fireStrength+move.value)*0.75-(opponent.defence+opponent.fireDefence))
+        elif move.damageType == "Earth":
+            damage = int((enemy_obj.earthStrength+move.value)*0.75-(opponent.defence+opponent.earthDefence))
+        elif move.damageType == "Ice":
+            damage = int((enemy_obj.iceStrength+move.value)*0.75-(opponent.defence+opponent.iceDefence))
+        elif move.damageType == "Heal":
+            self.hp+=move.potency
+        else:
+            print(move.damageType)
+
+        damage = damage // opponent.guarding
+
+        if damage < 0:
+            damage = 0
+
+        opponent.hp -= damage
 
 
 class energy_move():
@@ -155,7 +183,7 @@ class enemy_move():
 
 
 player_stats = player_battle_container()
-enemy_obj = enemy_battle_container(name="King Fire Slime",max_hp=25)
+# enemy_obj = enemy_battle_container(name="King Fire Slime")
 #blue is player, red is enemy
 turnOrder = ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 
@@ -180,8 +208,9 @@ pygame.image.save(screen, "Assets/saveBackground.png")
 
 #uses ticks/count timers, +1 per loop for time tracking for animations etc.
 tick_timers = {"Battle":0}
-menu_selected = {"Battle":0, "Battle-Energy":0}
+menu_selected = {"Battle":0, "Battle-Energy":0,"Battle-Item":0}
 playerTurn = True
+turnCounter = {"Player":0,"Enemy":0}
 
 class sprite_obj():
     def __init__(self,x,y):
@@ -219,7 +248,7 @@ def load_items():
     file.close()
     for i in items_file:
         i = i.split(",")
-        ls.append(item(*i))
+        ls.append(item(i[0],i[1],int(i[2])))
 
     return ls
 
@@ -231,10 +260,27 @@ def load_enemy_moves():
     file.close()
     for i in items_file:
         i = i.split(",")
-        ls.append(enemy_move(*i))
+        ls.append(enemy_move(i[0],i[1],int(i[2]))) 
 
     return ls
 
+
+def load_enemy(enemyID):
+    file = open(f"Data/Enemies/{enemyID}.txt")
+    enemyData = file.readlines()
+    # print(enemyData)
+    file.close()
+
+    tempEnemyContainer = enemy_battle_container(name=enemyData[0][:-1],max_hp=int(enemyData[1]),physicalStrength=int(enemyData[2]),defence=int(enemyData[3]),speed=int(enemyData[4]),fireStrength=int(enemyData[5]),\
+                                                iceStrength=int(enemyData[6]),earthStrength=int(enemyData[7]),fireDefence=int(enemyData[8]),iceDefence=int(enemyData[9]),earthDefence=int(enemyData[10]),)
+
+    for i in range(11,len(enemyData)):
+        moveData = enemyData[i].split(",")
+        tempEnemyContainer.moves[moveData[0]] = float(moveData[1])
+
+    return tempEnemyContainer
+
+# load_enemy("KingFireSlime")
 
 energy_moves = load_energy_moves()
 # print(energy_moves)
@@ -243,17 +289,21 @@ player_stats.set_energyMoves(energy_moves[0],energy_moves[1],energy_moves[2],ene
 
 items = load_items()
 player_stats.add_item(items[0],5)
+player_stats.add_item(items[1],5)
+player_stats.add_item(items[2],5)
+
 # print(player_stats.items)
 
+enemy_obj = load_enemy("KingFireSlime")
 
 enemy_moves = load_enemy_moves()
 enemy_obj.moves = {enemy_moves[0]:0.7,enemy_moves[1]:0.3}
 
-enemy_obj.make_move()
-enemy_obj.make_move()
-enemy_obj.make_move()
-enemy_obj.make_move()
-enemy_obj.make_move()
+# enemy_obj.make_move(player_stats)
+# enemy_obj.make_move()
+# enemy_obj.make_move()
+# enemy_obj.make_move()
+# enemy_obj.make_move()
 
 
 
@@ -263,9 +313,6 @@ sprites_pos_that_can_be_rendered = []#to check for what new objects to create
 
 game_state = Enum.StateOfGame()
 game_state.set_value("Moving")
-
-
-
 
 
 
@@ -539,7 +586,45 @@ def raycast():
 
 def calculate_turn_order(player,enemy):
     #TEMPORARY
-    return ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
+    # return ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
+
+    pTime = turnCounter["Player"]
+    pSpeed = player.speed
+
+    eTime = turnCounter["Enemy"]
+    eSpeed = enemy.speed
+
+    order = []
+
+    for _ in range(5):
+        if pTime >= eTime:
+            order.append("#0000FF")
+            eTime+=eSpeed
+        else:
+            order.append("#FF0000")
+            pTime+=pSpeed
+
+    return order
+
+
+def determine_turn():
+    global playerTurn, turnOrder
+
+    if turnCounter["Player"] >= turnCounter["Enemy"]:
+        playerTurn = True
+    else:
+        playerTurn = False
+
+    turnOrder = calculate_turn_order(player_stats,enemy_obj)
+
+
+def update_turn_counters(playerMoved=True):
+    global turnCounter
+
+    if playerMoved:
+        turnCounter["Enemy"] += enemy_obj.speed
+    else:
+        turnCounter["Player"] += player_stats.speed
 
 
 def deal_damage(user,opponent):
@@ -679,10 +764,24 @@ def draw_battle_energy_UI():
     draw_text(screen,f"EP Cost:       {selectedMove.EPcost}","#FFFFFF",1030,330)
 
 
+def draw_battle_item_UI():
+    pygame.draw.polygon(screen,"#3ec54b", ((980,435),(1220,565),(1195,650),(950,520)) )
+    invItems = list(player_stats.items.keys())
+    draw_text(screen,invItems[menu_selected["Battle-Item"]].name,"#d4e650",980,470,34,40)
 
+    pygame.draw.polygon(screen, "#d4e650",((1008,448),(960,520),(963,470)))
+    pygame.draw.polygon(screen, "#d4e650",((1208,600),(1150,620),(1180,560)))
 
+    pygame.draw.rect(screen, "brown",pygame.Rect(1020,160,200,200))
+    pygame.draw.rect(screen, "#000000",pygame.Rect(1022,162,196,196))
 
+    #selected energy move name
+    selectedItem = invItems[menu_selected["Battle-Item"]]
+    draw_text(screen, selectedItem.name,"#FFFFFF",1120,185,centre=True)
 
+    draw_text(screen,f"Type:          {selectedItem.effectType}","#FFFFFF",1030,205)
+    draw_text(screen,f"Power:       {selectedItem.potency}","#FFFFFF",1030,230)
+    draw_text(screen,f"Amount:    {player_stats.items[selectedItem]}","#FFFFFF",1030,255)
 
 
 
@@ -722,10 +821,11 @@ def draw_enemy_stats():
 
 
 def main():
-    global player_angle, brick, turnOrder
+    global player_angle, brick, turnOrder, playerTurn
 
     player_angle = 0
     turnOrder = calculate_turn_order(player_stats,enemy_obj)
+    
 
     brick = wall_image("Brick.png")
     #print(brick.img_slices[5].show())
@@ -739,8 +839,7 @@ def main():
     #turning = 0
     running = True
 
-    while running:             
-
+    while running:           
         keys=pygame.key.get_pressed()
         if game_state.value == "Moving":
             for event in pygame.event.get():
@@ -771,6 +870,12 @@ def main():
                 pygame.image.save(screen, "Assets/saveBackground.png")
             
         elif game_state.value == "Battle":
+            player_stats.cancel_guard()
+
+            if playerTurn == False:#ie enemy turn
+                enemy_obj.make_move(player_stats)
+                update_turn_counters(False)
+                determine_turn()  
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -800,18 +905,35 @@ def main():
                         else:
                             menu_selected["Battle"] -= 2
 
+
                     if playerTurn:
                         if event.key == pygame.K_SPACE:
                             if menu_selected["Battle"] == 0:#attack
                                 deal_damage(player_stats,enemy_obj)
+                                playerTurn = False
+                                update_turn_counters()
+                                determine_turn()
+
                             elif menu_selected["Battle"] == 1:#energy
                                 game_state.set_value("Battle-Energy")
+
                             elif menu_selected["Battle"] == 2:#item
-                                player_stats.hp+=2
+                                # player_stats.hp+=2
+                                if len(player_stats.items):#if inventory isn't empty
+                                    game_state.set_value("Battle-Item")
+                                else:
+                                    pass #Error sound
+
                             elif menu_selected["Battle"] == 3:#guard
-                                player_stats.hp -= 2
-                    else:
-                        pass
+                                # player_stats.hp -= 2
+                                player_stats.guard()
+                                playerTurn = False
+                                update_turn_counters()
+                                determine_turn()
+
+                        
+                    
+
 
 
             if tick_timers["Battle"] < 27: #(10-1)*3 #refer to draw battle UI to see animation, each frame 3 ticks
@@ -870,6 +992,10 @@ def main():
                             menu_selected["Battle-Energy"] -= 2
                     if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
                         game_state.set_value("Battle")
+                        playerTurn = False
+                        update_turn_counters()
+                        determine_turn()
+
                         move = player_stats.energyMoves[menu_selected["Battle-Energy"]]
                         energyDamage=0
 
@@ -904,12 +1030,62 @@ def main():
 
             pygame.display.flip()
 
-        # if turning != 0:
-        #     player_angle+=turning
-        #     draw_screen()
-        #     if player_angle%90==0:
-        #         turning=0
+        elif game_state.value == "Battle-Item":
+            numItems = len(player_stats.items.keys())
 
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE or event.key == pygame.K_BACKSPACE:
+                        game_state.set_value("Battle")
+
+                    if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                        if menu_selected["Battle-Item"]==0:
+                            menu_selected["Battle-Item"] = numItems-1
+                        else:
+                            menu_selected["Battle-Item"] -= 1
+
+                    if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                        if menu_selected["Battle-Item"]==numItems-1:
+                            menu_selected["Battle-Item"] = 0
+                        else:
+                            menu_selected["Battle-Item"] += 1
+
+                    if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+                        selectedItem = list(player_stats.items.keys())[menu_selected["Battle-Item"]]
+                        player_stats.items[selectedItem] -= 1
+
+                        if player_stats.items[selectedItem] == 0:
+                            
+                            player_stats.items.pop(selectedItem)
+                            
+                            if menu_selected["Battle-Item"] == numItems-1:
+                                menu_selected["Battle-Item"] -= 1
+                                numItems -= 1
+
+                        if selectedItem.effectType == "Heal":
+                            player_stats.hp += selectedItem.potency
+                        elif selectedItem.effectType == "Damage":
+                            enemy_obj.hp -= selectedItem.potency
+
+
+                        game_state.set_value("Battle")
+                        playerTurn = False
+                        update_turn_counters()
+                        determine_turn()
+
+    
+
+
+            if len(player_stats.items): #if items isnt empty
+                draw_battle_item_UI()
+            draw_enemy_stats()
+            draw_player_stats()
+
+            pygame.display.flip()
+
+  
         clock.tick(30)  
 
     pygame.quit()
