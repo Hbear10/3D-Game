@@ -90,7 +90,7 @@ class battle_container():
         
 
 class player_battle_container(battle_container):
-    def __init__(self, max_hp=100, max_ep=25, physicalStrength=10, defence=10, speed=80, fireStrength=5, iceStrength=5, eartStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,relics=[],specialRelics=[],items={},energyMoves=[0,0,0,0]):
+    def __init__(self, max_hp=100, max_ep=25, physicalStrength=10, defence=10, speed=80, fireStrength=1, iceStrength=1, eartStrength=1, fireDefence=1, iceDefence=1, earthDefence=1,relics=[],specialRelics=[],items={},energyMoves=[0,0,0,0]):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, eartStrength, fireDefence, iceDefence, earthDefence)
         self.max_ep = max_ep
         self.ep=max_ep
@@ -139,11 +139,11 @@ class enemy_battle_container(battle_container):
         if move.damageType == "Physical":
             damage = int((enemy_obj.physicalStrength+move.value)*0.75-opponent.defence)
         elif move.damageType == "Fire":
-            damage = int((enemy_obj.fireStrength+move.value)*0.75-(opponent.defence+opponent.fireDefence))
+            damage = int((enemy_obj.fireStrength*move.value)*0.75-(opponent.defence*opponent.fireDefence))
         elif move.damageType == "Earth":
-            damage = int((enemy_obj.earthStrength+move.value)*0.75-(opponent.defence+opponent.earthDefence))
+            damage = int((enemy_obj.earthStrength*move.value)*0.75-(opponent.defence*opponent.earthDefence))
         elif move.damageType == "Ice":
-            damage = int((enemy_obj.iceStrength+move.value)*0.75-(opponent.defence+opponent.iceDefence))
+            damage = int((enemy_obj.iceStrength*move.value)*0.75-(opponent.defence*opponent.iceDefence))
         elif move.damageType == "Heal":
             self.hp+=move.potency
         else:
@@ -158,12 +158,12 @@ class enemy_battle_container(battle_container):
 
 
 class energy_move():
-    def __init__(self,name,physicalValue,fireValue,earthValue,iceVale,healValue,EPcost):
+    def __init__(self,name,physicalValue,fireValue,iceValue,earthValue,healValue,EPcost):
         self.name = name
         self.physicalValue = physicalValue
         self.fireValue = fireValue
         self.earthValue = earthValue
-        self.iceValue = iceVale
+        self.iceValue = iceValue
         self.healValue = healValue
         self.EPcost = EPcost
 
@@ -187,9 +187,9 @@ player_stats = player_battle_container()
 #blue is player, red is enemy
 turnOrder = ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 
-door = Image.open("Assets/Door.png")
+# door = Image.open("Assets/Door.png")
 
-sprites_loaded = {"door" : pygame.image.load("Assets/Door.png").convert_alpha()}
+sprites_loaded = {"door" : pygame.image.load("Assets/Door.png").convert_alpha(),"KingFireSlime": pygame.image.load("Assets/FireSlimeKing.png").convert_alpha()}
 
 #UI images
 player_selfie = pygame.image.load("Assets/PlayerSelfie.png").convert_alpha()
@@ -214,8 +214,8 @@ turnCounter = {"Player":0,"Enemy":0}
 displayInv = False
 
 class sprite_obj():
-    def __init__(self,x,y):
-        self.sprite_image = sprites_loaded["door"]
+    def __init__(self,x,y,imageID="door"):
+        self.sprite_image = sprites_loaded[imageID]
         self.sprite_x = x
         self.sprite_y = y
         self.distance = math.sqrt((x-player_pos[0])**2+(y-player_pos[1])**2)* math.cos(math.radians(90) + math.radians(player_angle)-math.atan2( (player_pos[1]-(y)) , (player_pos[0]-(x))))
@@ -272,8 +272,11 @@ def load_enemy(enemyID):
     # print(enemyData)
     file.close()
 
-    tempEnemyContainer = enemy_battle_container(name=enemyData[0][:-1],max_hp=int(enemyData[1]),physicalStrength=int(enemyData[2]),defence=int(enemyData[3]),speed=int(enemyData[4]),fireStrength=int(enemyData[5]),\
-                                                iceStrength=int(enemyData[6]),earthStrength=int(enemyData[7]),fireDefence=int(enemyData[8]),iceDefence=int(enemyData[9]),earthDefence=int(enemyData[10]),)
+    for i in range(len(enemyData)):
+        enemyData[i]=enemyData[i].removesuffix("\n")
+
+    tempEnemyContainer = enemy_battle_container(name=enemyData[0],max_hp=int(enemyData[1]),physicalStrength=int(enemyData[2]),defence=int(enemyData[3]),speed=int(enemyData[4]),fireStrength=float(enemyData[5]),\
+                                                iceStrength=float(enemyData[6]),earthStrength=float(enemyData[7]),fireDefence=float(enemyData[8]),iceDefence=float(enemyData[9]),earthDefence=float(enemyData[10]),)
 
     for i in range(11,len(enemyData)):
         moveData = enemyData[i].split(",")
@@ -314,8 +317,6 @@ sprites_pos_that_can_be_rendered = []#to check for what new objects to create
 
 game_state = Enum.StateOfGame()
 game_state.set_value("Moving")
-
-
 
 
 
@@ -381,11 +382,14 @@ def raycast_ray(count):
     while not is_blocked:#Until the ray meets a boundary
         degree_angles = math.degrees(angle)#convert angle from radians to degrees as it makes some calculations easier
 
-        if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":#if there are any sprites on the screen that should be rendered
+        if map[ray_pos_grid[1]][ray_pos_grid[0]] in ("S","B"):#if there are any sprites on the screen that should be rendered
             if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites_pos_that_can_be_rendered:
                 #print(degree_angles)
-                sprites_pos_that_can_be_rendered.append( (ray_pos_grid[0],ray_pos_grid[1]) ) 
-                sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5) )
+                sprites_pos_that_can_be_rendered.append( (ray_pos_grid[0],ray_pos_grid[1]) )
+                if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":
+                    sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5) )
+                else:
+                    sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5,imageID="KingFireSlime") )
             else:
                 sprites[-1].left_point = 0
 
@@ -687,11 +691,20 @@ def draw_sprites():
         #print(f"{math.degrees(sprite_bearing)=}")
 
 
+        #Fix sprites of different sizes
+        #I want to allow for spirtes up to 64x64 because why not, I will probably limit to 16, 32 and 64 though
+        sprite_width = sprite.sprite_image.get_width()
+        if sprite_width != 64:
+            sprite.sprite_image = pygame.transform.scale_by(sprite.sprite_image, 64/sprite_width)
+
+        # sprite.left_point*4
+        # sprite.right_point*4
+
 
         if sprite_distance > 0.04 and (90> (math.degrees(sprite_bearing)+player_angle)%360 or (math.degrees(sprite_bearing)+player_angle)%360>270) and sprite.left_point != sprite.right_point:
-            sprite_scale_by = (20/sprite_distance) 
-            screen.blit(pygame.transform.scale_by(sprites_loaded["door"],sprite_scale_by),                        #image
-                        (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))-sprite_scale_by*sprite.left_point),#x start,  - the scale left point because - move it left and then fix to write spot
+            sprite_scale_by = (22/sprite_distance)
+            screen.blit(pygame.transform.scale_by(sprite.sprite_image,sprite_scale_by/4),                        #image
+                        (640-(160/sprite_distance) - int(500*math.tan(sprite_bearing+math.radians(player_angle))-sprite_scale_by*sprite.left_point),#x start,  - the scale left point because - move it left and then fix to right spot
                                     (360-(8*sprite_scale_by))),                                                   #y start              
                         (sprite_scale_by*sprite.left_point,0,(sprite.right_point)*sprite_scale_by,16*sprite_scale_by))
     
@@ -710,6 +723,7 @@ def draw_inventory_roaming():
         draw_text(screen,f"{items[i].name}       x{inv[items[i]]}   ","#FFFFFF",60,75+i*25)
 
 
+
 def draw_screen():
     screen.fill("dark grey")
     pygame.draw.rect(screen,(34,34,34), pygame.Rect(0,0,1280,360))
@@ -721,6 +735,7 @@ def draw_screen():
         draw_inventory_roaming()
 
     pygame.display.flip()
+
 
 
 def draw_battle_UI():
@@ -847,6 +862,15 @@ def check_over_max_hp():
         enemy_obj.hp = enemy_obj.max_hp
 
 
+def check_battle_end():
+    if player_stats.hp <= 0:
+        pass
+    if enemy_obj.hp <= 0:
+        game_state.set_value("Moving")
+        # map[int(player_pos[1])][int(player_pos[0])] = 0
+        draw_screen()
+
+
 def main():
     global player_angle, brick, turnOrder, playerTurn, displayInv
 
@@ -886,18 +910,31 @@ def main():
                         player_pos[0]+=0.05*math.sin(math.radians(player_angle))
                 except:
                     pass
+
+            if keys[pygame.K_s] or keys[pygame.K_DOWN]:
+                if map[int(player_pos[1]+0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])] != 1:
+                    player_pos[1]+=0.05*math.cos(math.radians(player_angle))
+                try: 
+                    if map[int(player_pos[1])][int(player_pos[0]-0.15* math.sin(math.radians(player_angle)) / abs(math.sin(math.radians(player_angle))) )] != 1:
+                        player_pos[0]-=0.05*math.sin(math.radians(player_angle))
+                except:
+                    pass
+
             if keys[pygame.K_a] or keys[pygame.K_LEFT]:
                 player_angle -= 5
             if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
                 player_angle += 5
             
-            if True in [keys[pygame.K_UP],keys[pygame.K_LEFT],keys[pygame.K_RIGHT],keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_d]]:
+            if True in [keys[pygame.K_UP],keys[pygame.K_LEFT],keys[pygame.K_RIGHT],keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_d],keys[pygame.K_s],keys[pygame.K_DOWN]]:
                 draw_screen()
 
             if map[int(player_pos[1])][int(player_pos[0])]=="S": #can change later so we in the centre 0.5 square
                 new_maze()
                 draw_screen()
             elif map[int(player_pos[1])][int(player_pos[0])]=="B":
+                map[int(player_pos[1])][int(player_pos[0])] = 0
+                draw_screen()
+                pygame.display.flip()
                 game_state.set_value("Battle")
                 pygame.image.save(screen, "Assets/saveBackground.png")
    
@@ -906,7 +943,7 @@ def main():
 
             if playerTurn == False:#ie enemy turn
                 enemy_obj.make_move(player_stats)
-                update_turn_counters(False)
+                update_turn_counters(playerMoved=False)
                 determine_turn()  
 
             for event in pygame.event.get():
@@ -972,11 +1009,15 @@ def main():
                 tick_timers["Battle"] += 1
 
             #print("Hi")
+            
             draw_battle_UI()
 
             enemy.draw_enemy()
             draw_player_stats()
             draw_enemy_stats()
+
+
+            check_battle_end()
 
             
             # if keys[pygame.K_a] or keys[pygame.K_LEFT]:
@@ -1043,20 +1084,22 @@ def main():
                                 if tempDamage > 0:
                                     energyDamage+=tempDamage
                             if move.fireValue != 0:
-                                tempDamage = (move.fireValue+player_stats.fireStrength)*1.25-(enemy_obj.defence+enemy_obj.fireDefence)
+                                tempDamage = (move.fireValue*player_stats.fireStrength)*1.25-(enemy_obj.defence*enemy_obj.fireDefence)
                                 if tempDamage > 0:
                                     energyDamage+=tempDamage
                             if move.earthValue != 0:
-                                tempDamage = (move.earthValue+player_stats.earthStrength)*1.25-(enemy_obj.defence+enemy_obj.earthDefence)
+                                tempDamage = (move.earthValue*player_stats.earthStrength)*1.25-(enemy_obj.defence*enemy_obj.earthDefence)
+                                print(enemy_obj.earthDefence)
                                 if tempDamage > 0:
                                     energyDamage+=tempDamage
                             if move.iceValue != 0:
-                                tempDamage = (move.iceValue+player_stats.iceStrength)*1.25-(enemy_obj.defence+enemy_obj.iceDefence)
+                                tempDamage = (move.iceValue*player_stats.iceStrength)*1.25-(enemy_obj.defence*enemy_obj.iceDefence)
                                 if tempDamage > 0:
                                     energyDamage+=tempDamage
 
                             player_stats.hp += move.healValue
                             enemy_obj.hp -= int(energyDamage)
+
 
                         else:
                             pass#add error noise rahah type noise
@@ -1064,11 +1107,14 @@ def main():
 
 
                     
-            check_over_max_hp()
+            
 
             draw_battle_energy_UI()
             draw_enemy_stats()
             draw_player_stats()
+
+            check_over_max_hp()
+            check_battle_end()
 
             pygame.display.flip()
 
@@ -1119,12 +1165,15 @@ def main():
 
     
 
-            check_over_max_hp()
+             
 
             if len(player_stats.items): #if items isnt empty
                 draw_battle_item_UI()
             draw_enemy_stats()
             draw_player_stats()
+
+            check_over_max_hp()
+            check_battle_end()
 
             pygame.display.flip()
 

@@ -1,0 +1,14 @@
+Enemy Name
+hp e.g. 100
+physical strength
+physical defence
+speed
+fire strength
+ice strength
+earth strength
+fire defence
+ice defence
+earth defence
+Move1,probability
+Move2,probability
+...

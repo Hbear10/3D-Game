@@ -3,11 +3,11 @@ King Fire Slime
 10
 10
 50
-5
-5
-5
-5
-5
-5
+1.5
+1
+1
+1
+2
+0.5
 Fireball,0.7
 Fireblast,0.3
