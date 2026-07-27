@@ -800,6 +800,17 @@ class battleAnimation():
                 pygame.display.flip()
             pygame.time.wait(int(1000/30))#1 frame,      (1000ms/30 frames)ms
 
+    def transitionAnim(self,surface):
+        c=1
+
+        for _ in range(self.lengthTime):
+            c+=1
+            pygame.draw.rect(surface=surface, color="#000000", rect=pygame.Rect(0,0,c*64,720))
+
+            pygame.display.flip()
+            pygame.time.wait(int(1000/30))#1 frame,      (1000ms/30 frames)ms
+        
+
 a = battleAnimation(animID="Fire2Enemy",x=16)
 
 #main function
@@ -864,6 +875,7 @@ def main():
                 pygame.display.flip()
                 game_state.set_value("Battle")
                 pygame.image.save(screen, "Assets/saveBackground.png")
+                battleAnimation(length=20,).transitionAnim(screen)
    
         elif game_state.value == "Battle":
             player_stats.cancel_guard()
