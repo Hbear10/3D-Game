@@ -127,7 +127,7 @@ pygame.image.save(screen, "Assets/saveBackground.png")
 
 #uses ticks/count timers, +1 per loop for time tracking for animations etc.
 tick_timers = {"Battle":0}
-menu_selected = {"Battle":0, "Battle-Energy":0,"Battle-Item":0}
+menu_selected = {"Battle":0, "Battle-Energy":0,"Battle-Item":0,"Battle-Won":0}
 playerTurn = True
 turnCounter = {"Player":0,"Enemy":0}
 displayInv = False
@@ -686,6 +686,38 @@ def draw_battle_item_UI():
     draw_text(screen,f"Amount:    {player_stats.items[selectedItem]}","#FFFFFF",1030,255)
 
 
+def draw_battle_won_UI():
+    translucentSurface = pygame.Surface((1280,720), pygame.SRCALPHA) #This is a surface that can be drawn on with opacities so I can have a blurry background
+    pygame.draw.rect(translucentSurface,(16, 7, 54, 128),pygame.Rect(0,0,1280,720))#draws the a translucent rectangle onto the new surface, 4th element in colour array is opacity
+    screen.blit(pygame.image.load("Assets/saveBackground.png"),(0,0))#puts the saved image on the back for something to draw onto and as a backdrop
+    screen.blit(translucentSurface, (0,0))    #draw the new surface with the blurry stuff
+
+    #main box
+    pygame.draw.rect(screen, (16, 7, 54),pygame.Rect(384,64,512,592),border_radius=10)
+    draw_text(screen,f"You defeated the {enemy_obj.name}","#FFFFFF",640,96,fontSize=32,centre=True)
+    draw_text(screen,f"Choose a Reward:","#FFFFFF",640,120,fontSize=24,centre=True)
+
+
+    #use this to highlight which reward is currently selected/hovered over
+    reward_selection_colours = ["brown","brown","brown"]
+    reward_selection_colours[menu_selected["Battle-Won"]]="#FFFFFF"
+
+    #Rewards/Relics
+    pygame.draw.rect(screen,reward_selection_colours[0], pygame.Rect(420,150,440,100),border_radius=10)
+    pygame.draw.rect(screen,"#000000", pygame.Rect(422,152,436,96),border_radius=10)
+
+    pygame.draw.rect(screen,reward_selection_colours[1], pygame.Rect(420,270,440,100),border_radius=10)
+    pygame.draw.rect(screen,"#000000", pygame.Rect(422,272,436,96),border_radius=10)
+
+    pygame.draw.rect(screen,reward_selection_colours[2], pygame.Rect(420,390,440,100),border_radius=10)
+    pygame.draw.rect(screen,"#000000", pygame.Rect(422,392,436,96),border_radius=10)
+
+    #:D
+    draw_text(screen,f":D","#FFFFFF",640,600,fontSize=24,centre=True)
+
+    
+    pygame.display.flip()
+
 #player icon player health etc.
 def draw_player_stats():
     pygame.draw.rect(screen, color="brown", rect=pygame.Rect(0,528,512,192))
@@ -734,7 +766,7 @@ def check_battle_end():
     if player_stats.hp <= 0:
         pass
     if enemy_obj.hp <= 0:
-        game_state.set_value("Moving")
+        game_state.set_value("Battle-Won")
         # map[int(player_pos[1])][int(player_pos[0])] = 0
         draw_screen()
 
@@ -794,7 +826,7 @@ def main():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_o or event.key == pygame.K_i:#toggle inventory
                         displayInv = not displayInv #flip variable
-                        a.play_anim(screen)
+                        # a.play_anim(screen)
                         draw_screen()
 
             if keys[pygame.K_w] or keys[pygame.K_UP]:
@@ -1075,7 +1107,30 @@ def main():
 
             pygame.display.flip()
 
-  
+        elif game_state.value == "Battle-Won":
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key in (pygame.K_ESCAPE, pygame.K_BACKSPACE, pygame.K_SPACE, pygame.K_RETURN):
+                        game_state.set_value("Moving")
+                        draw_screen()
+                        pygame.display.flip()
+                        break
+                    if event.key == pygame.K_w or event.key == pygame.K_UP:
+                        menu_selected["Battle-Won"] = (menu_selected["Battle-Won"]-1)% 3#cycle up, %3 to go back to the bottom
+                    if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                        menu_selected["Battle-Won"] = (menu_selected["Battle-Won"]+1)%3 #cycle down, %3 to go back to the top
+
+
+            if game_state.value != "Battle-Won":#ie there has been a state change so I don't want to draw all the bottom stuff
+                #this happens above when a reward is selected
+                #so we continue out of the statement
+                continue
+
+
+            draw_battle_won_UI()
+
         clock.tick(30)  
 
     pygame.quit()
