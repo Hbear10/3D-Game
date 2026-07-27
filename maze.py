@@ -101,7 +101,7 @@ def maze_generate(size: int) -> list:
 
             points =  free_spaces(maze,tracker_point)
 
-    maze[y_start][x_start]="W"
+    maze[y_start][x_start]="W"#start point
 
     R_points = []
     for y in range(size):

@@ -9,48 +9,39 @@ import block_scan
 import Enum
 import Spritesheet
 from battleElements import *
-#from render import *
+from render import *
 
 print("Hello World!")
 
 
-class tile():
-    def __init__(self):
-        pass
 
-class path(tile):
-    pass
 
-class wall(tile):
-    def __init__(self,image):
-        self.wallImage = image
 
-wallTest = wall(pygame.image.load("Assets/Column.png"))
-
-#The traversable map is stored as a 2D array
-map = [[1,1,1,1,1,1,1,1,1],
-       [1,0,0,0,0,0,0,0,1],
-       [1,0,"S",0,1,1,1,1,1],
-       [1,0,0,0,1],
-       [1,0,"S",0,1],
-       [1,0,0,0,1],
-       [1,0,"S",0,1],
-       [1,0,1,0,1],
-       [1,0,0,0,1],
-       [1,0,"B",0,1],
-       [wallTest,0,0,0,1],
-       [1,0,"W",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
-       [1,1,1,1,1]]
 
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
 
 FOV = 100 #The field of view of the player
 
-def new_maze():
+
+
+def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")]):
     global map, player_pos
 
     map,player_pos = maze.maze_generate(11)
 
+    #add in random thingies here
+    #add some things to the R points
+
+    for x in range(len(map)):
+        for y in range(len(map[x])):
+            if map[x][y] == 1:
+                # map[x][y]=tile("Wall",wall_image=wall_image("Brick.png"))
+                map[x][y]=tile("Wall",wall_image=random.choice(wall_tiles))
+            elif map[x][y] == "S":
+                map[x][y] = tile("Sprite",spriteInfo="S")
+            else:
+                map[x][y] = tile("Path")
+ 
 
 raycast_column_width = 2 #The width of each pixel column, increase it to improve performance as it reduces the amount of rays sent
 
@@ -63,16 +54,37 @@ game_font = pygame.font.Font('Evil Empire.otf', 24)
 
 player_angle=0 # Direction the player is facing
 
-class wall_image():
-    def __init__(self,image_name):
-        self.main_image = Image.open("Assets/"+image_name)
-        self.width = (self.main_image.size)[0]
-        self.height = (self.main_image.size)[1]
-        self.img_slices = []
-        for i in range(self.width):
-            self.img_slices.append(self.main_image.crop((i,0,i+1,16)))
 
 
+wallTest = tile("Wall",wall_image("Column.png"))
+
+#The traversable map is stored as a 2D array, this is my testing map
+map = [[1,1,1,1,1,1,1,1,1],
+       [1,0,0,0,0,0,0,0,1],
+       [1,0,"S",0,1,1,1,1,1],
+       [1,0,0,0,1],
+       [1,0,"S",0,1],
+       [1,0,0,0,1],
+       [1,0,"S",0,1],
+       [1,0,1,0,tile("Wall",wall_image=wall_image("Blue_Brick.png"))],
+       [1,0,0,0,tile("Wall",wall_image=wall_image("SmoothStone.png"))],
+       [1,0,"B",0,tile("Wall",wall_image=wall_image("SmoothStone.png"))],
+       [wallTest,0,0,0,1],
+       [1,0,"W",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
+       [1,1,1,1,1]]
+
+
+for x in range(len(map)):
+    for y in range(len(map[x])):
+        if map[x][y]==1:
+            map[x][y]=tile("Wall",wall_image=wall_image("Brick.png"))
+        elif map[x][y]==0 or map[x][y]=="W":
+            map[x][y]=tile("Path")
+        elif type(map[x][y])==str:
+            map[x][y]=tile("Sprite",spriteInfo=map[x][y])
+            # print(1)
+
+# print(type(tile("Wall",wall_image("Smooth_Stone.png"))))
 
 class battle_sprites():
     def __init__(self, image_name, resolution=32):
@@ -180,8 +192,10 @@ def order_sprites():#bubble sort, sorting the list into ascending order
                 sprites[i+1] = temporary
 
 
-def draw_beam(x_point,distance,image_index): #literally just takes the point along the screen and draws a line based on distance away from the camera, image index is for what column along an image to take
-    ray_slice = brick.img_slices[image_index].transform((raycast_column_width,int(360/distance)),Image.Transform.EXTENT,[0,0,1,16]) #transforms the image slice to the right size, 
+def draw_beam(x_point,distance,image_index,image=brick): #literally just takes the point along the screen and draws a line based on distance away from the camera, image index is for what column along an image to take
+
+    ray_slice = image.img_slices[image_index].transform((raycast_column_width,int(360/distance)),Image.Transform.EXTENT,[0,0,1,16]) #transforms the image slice to the right size, 
+
     pygame_surface = pygame.image.fromstring(ray_slice.tobytes(),ray_slice.size,ray_slice.mode).convert() #Turns the PIL image into a pygame image
     screen.blit(pygame_surface, pygame_surface.get_rect(center = (x_point+(raycast_column_width//2), 360))) # Draws the image slice onto the screen
 
@@ -223,18 +237,18 @@ def raycast_ray(count):
     while not is_blocked:#Until the ray meets a boundary
         degree_angles = math.degrees(angle)#convert angle from radians to degrees as it makes some calculations easier
 
-        if map[ray_pos_grid[1]][ray_pos_grid[0]] in ("S","B"):#if there are any sprites on the screen that should be rendered
+        if map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Sprite":#if there are any sprites on the screen that should be rendered
             if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites_pos_that_can_be_rendered:
                 #print(degree_angles)
                 sprites_pos_that_can_be_rendered.append( (ray_pos_grid[0],ray_pos_grid[1]) )
-                if map[ray_pos_grid[1]][ray_pos_grid[0]] == "S":
+                if map[ray_pos_grid[1]][ray_pos_grid[0]].spriteInfo == "S":
                     sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5) )
                 else:
                     sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5,imageID="KingFireSlime") )
             else:
                 sprites[-1].left_point = 0
 
-        if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1 or map[ray_pos_grid[1]][ray_pos_grid[0]] == wallTest:#if there is a wall
+        if map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Wall":#if there is a wall
             is_blocked = True
             
             image_index=0# which column of an image/wall the ray hit, 0.0625 is 1/16, starts from 0 and goes to 15
@@ -247,10 +261,9 @@ def raycast_ray(count):
             elif ray_pos == side_step_y:
                 image_index = int((ray_pos[0]%1)/0.0625)
 
-            if map[ray_pos_grid[1]][ray_pos_grid[0]] == 1:
-                return (round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index)#returns the distance to a wall (multipled by the cos of the angle to fix distortion) and the image index
-            else:
-                return (round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index,wallTest.wallImage)
+            if map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Wall":
+                #returns the distance to a wall (multipled by the cos of the angle to fix distortion) and the image index
+                return (round(ray_distance*math.cos(math.radians(player_angle)-angle),5),image_index,map[ray_pos_grid[1]][ray_pos_grid[0]].wallImage)
         else:
 
             if degree_angles%90!=0:
@@ -427,7 +440,10 @@ def raycast():
     for i in range(1280//raycast_column_width):#cast all the rays
         ray_store.append(raycast_ray(i))
     for i in range(1280//raycast_column_width):#draw all the rays
-        draw_beam(i*raycast_column_width,ray_store[i][0],ray_store[i][1])
+        if len(ray_store[i]) == 2:
+            draw_beam(i*raycast_column_width,ray_store[i][0],ray_store[i][1])
+        else:
+            draw_beam(i*raycast_column_width,ray_store[i][0],ray_store[i][1],ray_store[i][2])
 
     #print(time.perf_counter()-t)
 
@@ -762,7 +778,7 @@ def main():
     turnOrder = calculate_turn_order(player_stats,enemy_obj)
     
 
-    brick = wall_image("Brick.png")
+    
     draw_screen()
     running = True
 
@@ -782,19 +798,19 @@ def main():
                         draw_screen()
 
             if keys[pygame.K_w] or keys[pygame.K_UP]:
-                if map[int(player_pos[1]-0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])] != 1:
+                if map[int(player_pos[1]-0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])].tileType != "Wall":
                     player_pos[1]-=0.05*math.cos(math.radians(player_angle))
                 try: 
-                    if map[int(player_pos[1])][int(player_pos[0]+0.15* math.sin(math.radians(player_angle)) / abs(math.sin(math.radians(player_angle))) )] != 1:
+                    if map[int(player_pos[1])][int(player_pos[0]+0.15* math.sin(math.radians(player_angle)) / abs(math.sin(math.radians(player_angle))) )].tileType != "Wall":
                         player_pos[0]+=0.05*math.sin(math.radians(player_angle))
                 except:
                     pass
 
             if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-                if map[int(player_pos[1]+0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])] != 1:
+                if map[int(player_pos[1]+0.15* math.cos(math.radians(player_angle)) / abs(math.cos(math.radians(player_angle))) )][int(player_pos[0])].tileType != "Wall":
                     player_pos[1]+=0.05*math.cos(math.radians(player_angle))
                 try: 
-                    if map[int(player_pos[1])][int(player_pos[0]-0.15* math.sin(math.radians(player_angle)) / abs(math.sin(math.radians(player_angle))) )] != 1:
+                    if map[int(player_pos[1])][int(player_pos[0]-0.15* math.sin(math.radians(player_angle)) / abs(math.sin(math.radians(player_angle))) )].tileType != "Wall":
                         player_pos[0]-=0.05*math.sin(math.radians(player_angle))
                 except:
                     pass
@@ -807,11 +823,11 @@ def main():
             if True in [keys[pygame.K_UP],keys[pygame.K_LEFT],keys[pygame.K_RIGHT],keys[pygame.K_w],keys[pygame.K_a],keys[pygame.K_d],keys[pygame.K_s],keys[pygame.K_DOWN]]:
                 draw_screen()
 
-            if map[int(player_pos[1])][int(player_pos[0])]=="S": #can change later so we in the centre 0.5 square
+            if map[int(player_pos[1])][int(player_pos[0])].spriteInfo=="S": #can change later so we in the centre 0.5 square
                 new_maze()
                 draw_screen()
-            elif map[int(player_pos[1])][int(player_pos[0])]=="B":
-                map[int(player_pos[1])][int(player_pos[0])] = 0
+            elif map[int(player_pos[1])][int(player_pos[0])].spriteInfo=="B":
+                map[int(player_pos[1])][int(player_pos[0])] = tile("Path")
                 draw_screen()
                 pygame.display.flip()
                 game_state.set_value("Battle")

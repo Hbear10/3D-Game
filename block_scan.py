@@ -10,9 +10,10 @@ from math import sqrt, sin, cos, asin
 #Use a basic ray/raycast to calculate if there is a wall.
 #Use fixed step raycasting as it is easier to implement and has less complexity than DDA
 
+from render import * #get classes to understand tileType stuff although i don't think this is necessary
 
 
-def scan(grid:list, pos1:tuple, pos2:tuple, wall_val:int =1) -> bool:
+def scan(grid:list, pos1:tuple, pos2:tuple) -> bool:
     step_size = 0.025
     
     #no need because sine graph isn't symetrical
@@ -35,7 +36,7 @@ def scan(grid:list, pos1:tuple, pos2:tuple, wall_val:int =1) -> bool:
     scan_ray_pos = [pos1[0],pos1[1]] #Postion of the ray that to test if it is a wall, stop list linking
 
     while travel_distance < point_distance: 
-        if grid[int(scan_ray_pos[1])][int(scan_ray_pos[0])] == wall_val:
+        if grid[int(scan_ray_pos[1])][int(scan_ray_pos[0])].tileType == "Wall":
             return False #There is a wall blocking the line of sight, breaks out of function
         
         travel_distance += step_size                      #How far the ray has travelled so far
