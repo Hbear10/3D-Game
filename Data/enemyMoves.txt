@@ -1,2 +1,2 @@
-Fireball,Fire,20
-Fireblast,Fire,50
+Fireball,Fire,20,2
+Fireblast,Fire,50,3
