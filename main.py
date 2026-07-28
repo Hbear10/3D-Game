@@ -89,7 +89,7 @@ for x in range(len(map)):
 class battle_sprites():
     def __init__(self, image_name, resolution=32):
         self.resolution = resolution
-        self.battle_image = pygame.image.load(f"assets/{image_name}.png").convert_alpha()
+        self.battle_image = pygame.image.load(f"Assets/{image_name}.png").convert_alpha()
         self.battle_image = pygame.transform.scale_by(self.battle_image,(256/resolution))
 
     def draw_enemy(self,x_increment=0,y_increment=0):
