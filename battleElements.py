@@ -17,7 +17,7 @@ class battle_container():
         
 
 class player_battle_container(battle_container):
-    def __init__(self, max_hp=100, max_ep=25, physicalStrength=10, defence=10, speed=80, fireStrength=1, iceStrength=1, eartStrength=1, fireDefence=1, iceDefence=1, earthDefence=1,relics=[],specialRelics=[],items={},energyMoves=[0,0,0,0]):
+    def __init__(self, max_hp=100, max_ep=25, physicalStrength=10, defence=10, speed=50, fireStrength=1, iceStrength=1, eartStrength=1, fireDefence=1, iceDefence=1, earthDefence=1,relics=[],specialRelics=[],items={},energyMoves=[0,0,0,0]):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, eartStrength, fireDefence, iceDefence, earthDefence)
         self.max_ep = max_ep
         self.ep=max_ep
@@ -45,10 +45,12 @@ class player_battle_container(battle_container):
 
 
 class enemy_battle_container(battle_container):
-    def __init__(self, max_hp=100, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, earthStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,name="NULL",moves={}):
+    def __init__(self, max_hp=100, physicalStrength=10, defence=10, speed=10, fireStrength=5, iceStrength=5, earthStrength=5, fireDefence=5, iceDefence=5, earthDefence=5,name="NULL",ID="",moves={}):
         super().__init__(max_hp, physicalStrength, defence, speed, fireStrength, iceStrength, earthStrength, fireDefence, iceDefence, earthDefence)
         self.name=name
+        self.ID = ID
         self.moves=moves
+
 
     def make_move(self,opponent):
         randVal = random.random()
@@ -96,6 +98,8 @@ class enemy_battle_container(battle_container):
         moveCounter-=1
         # print(list(self.moves.keys())[moveCounter].name)
         move = list(self.moves.keys())[moveCounter]
+
+        print(self.moves.keys())
 
         return move
 
@@ -199,7 +203,8 @@ def load_enemy(enemyID):
         enemyData[i]=enemyData[i].removesuffix("\n")
 
     tempEnemyContainer = enemy_battle_container(name=enemyData[0],max_hp=int(enemyData[1]),physicalStrength=int(enemyData[2]),defence=int(enemyData[3]),speed=int(enemyData[4]),fireStrength=float(enemyData[5]),\
-                                                iceStrength=float(enemyData[6]),earthStrength=float(enemyData[7]),fireDefence=float(enemyData[8]),iceDefence=float(enemyData[9]),earthDefence=float(enemyData[10]),)
+                                                iceStrength=float(enemyData[6]),earthStrength=float(enemyData[7]),fireDefence=float(enemyData[8]),iceDefence=float(enemyData[9]),earthDefence=float(enemyData[10]),\
+                                                    ID=enemyID, moves={})
 
     for i in range(11,len(enemyData)):
         moveData = enemyData[i].split(",")

@@ -1,2 +1,4 @@
 Fireball,Fire,20,2
 Fireblast,Fire,50,3
+Stamp,Physical,15,1
+Slam,Physical,25,1

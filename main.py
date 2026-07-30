@@ -68,10 +68,10 @@ map = [[1,1,1,1,1,1,1,1,1],
        [1,0,"S",0,1],
        [1,0,1,0,tile("Wall",wall_image=wall_image("Blue_Brick.png"))],
        [1,0,0,0,tile("Wall",wall_image=wall_image("SmoothStone.png"))],
-       [1,0,"B",0,tile("Wall",wall_image=wall_image("SmoothStone.png"))],
-       [wallTest,0,0,0,1],
-       [1,0,"W",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
-       [1,1,1,1,1]]
+       [1,0,"BasicSlime",0,tile("Wall",wall_image=wall_image("SmoothStone.png")),1,1,1,1],
+       [wallTest,0,0,0,0,0,0,0,1],
+       [1,0,"W",0,0,0,"KingFireSlime",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
+       [1,1,1,1,1,1,1,1,1]]
 
 
 for x in range(len(map)):
@@ -80,8 +80,10 @@ for x in range(len(map)):
             map[x][y]=tile("Wall",wall_image=wall_image("Brick.png"))
         elif map[x][y]==0 or map[x][y]=="W":
             map[x][y]=tile("Path")
-        elif type(map[x][y])==str:
+        elif map[x][y]=="S":
             map[x][y]=tile("Sprite",spriteInfo=map[x][y])
+        elif type(map[x][y])==str:
+            map[x][y]=tile("Enemy",spriteInfo=map[x][y])
             # print(1)
 
 # print(type(tile("Wall",wall_image("Smooth_Stone.png"))))
@@ -98,7 +100,7 @@ class battle_sprites():
         screen.blit(self.battle_image,img_rect)
         
 
-enemy = battle_sprites("FireSlimeKing")
+enemy = battle_sprites("KingFireSlime")
 
 
 player_stats = player_battle_container()
@@ -108,7 +110,7 @@ turnOrder = ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 
 # door = Image.open("Assets/Door.png")
 
-sprites_loaded = {"door" : pygame.image.load("Assets/Door.png").convert_alpha(),"KingFireSlime": pygame.image.load("Assets/FireSlimeKing.png").convert_alpha()}
+sprites_loaded = {"door" : pygame.image.load("Assets/Door.png").convert_alpha(),"KingFireSlime": pygame.image.load("Assets/KingFireSlime.png").convert_alpha(),"BasicSlime": pygame.image.load("Assets/BasicSlime.png").convert_alpha()}
 
 #UI images
 player_selfie = pygame.image.load("Assets/PlayerSelfie.png").convert_alpha()
@@ -237,14 +239,15 @@ def raycast_ray(count):
     while not is_blocked:#Until the ray meets a boundary
         degree_angles = math.degrees(angle)#convert angle from radians to degrees as it makes some calculations easier
 
-        if map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Sprite":#if there are any sprites on the screen that should be rendered
+        if map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Sprite" or map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Enemy":#if there are any sprites on the screen that should be rendered
             if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites_pos_that_can_be_rendered:
                 #print(degree_angles)
                 sprites_pos_that_can_be_rendered.append( (ray_pos_grid[0],ray_pos_grid[1]) )
                 if map[ray_pos_grid[1]][ray_pos_grid[0]].spriteInfo == "S":
                     sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5) )
                 else:
-                    sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5,imageID="KingFireSlime") )
+                    #Enemy
+                    sprites.append( sprite_obj(ray_pos_grid[0]+0.5,ray_pos_grid[1]+0.5,imageID=map[ray_pos_grid[1]][ray_pos_grid[0]].spriteInfo) )
             else:
                 sprites[-1].left_point = 0
 
@@ -603,6 +606,18 @@ def draw_screen():
 
 
 
+def draw_turn_counters():
+    #turn order box
+    pygame.draw.rect(screen,"brown",pygame.Rect(0,0,100,420))
+    pygame.draw.rect(screen,"#000000",pygame.Rect(0,0,98,418))
+    
+    pygame.draw.polygon(screen, turnOrder[0],((48,16),(80,48),(48,80),(16,48)))
+    pygame.draw.polygon(screen, turnOrder[1],((48,96),(80,128),(48,160),(16,128)))
+    pygame.draw.polygon(screen, turnOrder[2],((48,176),(80,208),(48,240),(16,208)))
+    pygame.draw.polygon(screen, turnOrder[3],((48,256),(80,288),(48,320),(16,288)))
+    pygame.draw.polygon(screen, turnOrder[4],((48,336),(80,368),(48,400),(16,368)))
+
+
 #next 3 functions are used to draw UI in of battle menus
 def draw_battle_UI():
     
@@ -624,15 +639,7 @@ def draw_battle_UI():
         draw_text(screen,"Guard",optionColours[3],1075,550,34,40)
 
 
-    #turn order box
-    pygame.draw.rect(screen,"brown",pygame.Rect(0,0,100,420))
-    pygame.draw.rect(screen,"#000000",pygame.Rect(0,0,98,418))
-   
-    pygame.draw.polygon(screen, turnOrder[0],((48,16),(80,48),(48,80),(16,48)))
-    pygame.draw.polygon(screen, turnOrder[1],((48,96),(80,128),(48,160),(16,128)))
-    pygame.draw.polygon(screen, turnOrder[2],((48,176),(80,208),(48,240),(16,208)))
-    pygame.draw.polygon(screen, turnOrder[3],((48,256),(80,288),(48,320),(16,288)))
-    pygame.draw.polygon(screen, turnOrder[4],((48,336),(80,368),(48,400),(16,368)))
+    draw_turn_counters()
 
 
 def draw_battle_energy_UI():
@@ -665,6 +672,8 @@ def draw_battle_energy_UI():
     draw_text(screen,f"Heal:           {selectedMove.healValue}","#FFFFFF",1030,305)
     draw_text(screen,f"EP Cost:       {selectedMove.EPcost}","#FFFFFF",1030,330)
 
+    draw_turn_counters()
+
 
 def draw_battle_item_UI():
     pygame.draw.polygon(screen,"#3ec54b", ((980,435),(1220,565),(1195,650),(950,520)) )
@@ -684,6 +693,8 @@ def draw_battle_item_UI():
     draw_text(screen,f"Type:          {selectedItem.effectType}","#FFFFFF",1030,205)
     draw_text(screen,f"Power:       {selectedItem.potency}","#FFFFFF",1030,230)
     draw_text(screen,f"Amount:    {player_stats.items[selectedItem]}","#FFFFFF",1030,255)
+
+    draw_turn_counters()
 
 
 def draw_battle_won_UI():
@@ -815,7 +826,7 @@ a = battleAnimation(animID="Fire2Enemy",x=16)
 
 #main function
 def main():
-    global player_angle, brick, turnOrder, playerTurn, displayInv
+    global player_angle, brick, turnOrder, playerTurn, displayInv, enemy_obj
 
     player_angle = 0
     turnOrder = calculate_turn_order(player_stats,enemy_obj)
@@ -868,14 +879,19 @@ def main():
 
             if map[int(player_pos[1])][int(player_pos[0])].spriteInfo=="S": #can change later so we in the centre 0.5 square
                 new_maze()
+                battleAnimation(length=20,).transitionAnim(screen)
                 draw_screen()
-            elif map[int(player_pos[1])][int(player_pos[0])].spriteInfo=="B":
+            elif map[int(player_pos[1])][int(player_pos[0])].tileType=="Enemy":
+                enemy_obj = load_enemy( map[int(player_pos[1])][int(player_pos[0])].spriteInfo )
                 map[int(player_pos[1])][int(player_pos[0])] = tile("Path")
+                battleAnimation(length=20,).transitionAnim(screen)
+
                 draw_screen()
                 pygame.display.flip()
+                
                 game_state.set_value("Battle")
                 pygame.image.save(screen, "Assets/saveBackground.png")
-                battleAnimation(length=20,).transitionAnim(screen)
+                
    
         elif game_state.value == "Battle":
             player_stats.cancel_guard()
@@ -963,7 +979,7 @@ def main():
             #draw things onto screen
             draw_battle_UI()
 
-            enemy.draw_enemy()
+            battle_sprites(enemy_obj.ID).draw_enemy()
             draw_player_stats()
             draw_enemy_stats()
 
@@ -1014,8 +1030,10 @@ def main():
                         if player_stats.ep >= move.EPcost:
                             game_state.set_value("Battle")
                             playerTurn = False
+                            
                             update_turn_counters()
                             determine_turn()
+                            
 
                             player_stats.ep -= move.EPcost
 
@@ -1041,6 +1059,7 @@ def main():
 
                             player_stats.hp += move.healValue
                             enemy_obj.hp -= int(energyDamage)
+
 
 
                         else:
