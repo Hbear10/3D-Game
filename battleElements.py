@@ -99,8 +99,6 @@ class enemy_battle_container(battle_container):
         # print(list(self.moves.keys())[moveCounter].name)
         move = list(self.moves.keys())[moveCounter]
 
-        print(self.moves.keys())
-
         return move
 
     def use_move(self,opponent,move):

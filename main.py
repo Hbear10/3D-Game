@@ -20,7 +20,6 @@ print("Hello World!")
 
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
 
-FOV = 100 #The field of view of the player
 
 
 
@@ -57,6 +56,14 @@ player_angle=0 # Direction the player is facing
 
 
 wallTest = tile("Wall",wall_image("Column.png"))
+
+
+### Testing Vars, 
+FPS = 30
+battleAnimTime = 10 #has to be a multiple of 10 as animations are 10 frames long so it just won't render if it isnt a multiple of 10, value is how many frames it takes
+FOV = 100 #The field of view of the player, Changing is not recommended as rendering may become buggy especially with sprite rendering
+
+
 
 #The traversable map is stored as a 2D array, this is my testing map
 map = [[1,1,1,1,1,1,1,1,1],
@@ -795,21 +802,26 @@ class battleAnimation():
         self.numberOfFrames = len(self.frames)
 
 
-    def play_anim(self,surface,x=0,y=0):
+
+    def enemyMoveAnim(self,surface,x=0,y=0):
         c=1
 
         pygame.image.save(surface,"Assets/saveBattleAnimationBackground.png")
 
         # pygame.draw.rect(surface=surface, color="green", rect=pygame.Rect(c,c,c,c))
 
+        print(self.lengthTime//self.numberOfFrames)
+
         for _ in range(self.lengthTime):
-            c+=1
+            
             if c % (self.lengthTime/self.numberOfFrames) == 0:
                 screen.blit(pygame.image.load("Assets/saveBattleAnimationBackground.png"),(0,0))
                 screen.blit(self.frames[(c-1)//(self.lengthTime//self.numberOfFrames)],(x,y))
                 # pygame.draw.rect(surface=surface, color="green", rect=pygame.Rect(c,c,c,c))
                 pygame.display.flip()
             pygame.time.wait(int(1000/30))#1 frame,      (1000ms/30 frames)ms
+
+            c+=1
 
     def transitionAnim(self,surface):
         c=1
@@ -820,13 +832,33 @@ class battleAnimation():
 
             pygame.display.flip()
             pygame.time.wait(int(1000/30))#1 frame,      (1000ms/30 frames)ms
+
+    def playerMoveAnim(self,surface,x=0,y=0):
+        c=1
+
+        pygame.image.save(surface,"Assets/saveBattleAnimationBackground.png")
+
+        
+        print(self.lengthTime//self.numberOfFrames)
+
+
+        for _ in range(self.lengthTime):
+            
+            if c % (self.lengthTime/self.numberOfFrames) == 0:
+                screen.blit(pygame.image.load("Assets/saveBattleAnimationBackground.png"),(0,0))
+                screen.blit(self.frames[(c-1)//(self.lengthTime//self.numberOfFrames)],(x,y))
+                # pygame.draw.rect(surface=surface, color="green", rect=pygame.Rect(c,c,c,c))
+                pygame.display.flip()
+            pygame.time.wait(int(1000/30))#1 frame,      (1000ms/30 frames)ms
+
+            c+=1
         
 
 a = battleAnimation(animID="Fire2Enemy",x=16)
 
 #main function
 def main():
-    global player_angle, brick, turnOrder, playerTurn, displayInv, enemy_obj
+    global player_angle, brick, turnOrder, playerTurn, displayInv, enemy_obj,turnCounter
 
     player_angle = 0
     turnOrder = calculate_turn_order(player_stats,enemy_obj)
@@ -848,7 +880,7 @@ def main():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_o or event.key == pygame.K_i:#toggle inventory
                         displayInv = not displayInv #flip variable
-                        # a.play_anim(screen)
+                        # a.enemyMoveAnim(screen)
                         draw_screen()
 
             if keys[pygame.K_w] or keys[pygame.K_UP]:
@@ -882,6 +914,8 @@ def main():
                 battleAnimation(length=20,).transitionAnim(screen)
                 draw_screen()
             elif map[int(player_pos[1])][int(player_pos[0])].tileType=="Enemy":
+                turnCounter = {"Player":0,"Enemy":0}
+                turnOrder = calculate_turn_order(player_stats,enemy_obj)
                 enemy_obj = load_enemy( map[int(player_pos[1])][int(player_pos[0])].spriteInfo )
                 map[int(player_pos[1])][int(player_pos[0])] = tile("Path")
                 battleAnimation(length=20,).transitionAnim(screen)
@@ -905,8 +939,8 @@ def main():
                 draw_text(screen, f"used {move.name}","#FFFFFF",288,300,centre=True)
 
 
-                a = battleAnimation(animID=move.anim,x=16)
-                a.play_anim(screen,576,480)
+                a = battleAnimation(animID=move.anim,length=battleAnimTime,x=16,y=32)
+                a.enemyMoveAnim(screen,576,480)
 
                 enemy_obj.use_move(player_stats,move)
                 # enemy_obj.make_move(player_stats)
@@ -947,6 +981,8 @@ def main():
                     if playerTurn:
                         if event.key == pygame.K_SPACE:
                             if menu_selected["Battle"] == 0:#attack
+                                battleAnimation("Physical1Player",length=battleAnimTime,x=16,y=32).playerMoveAnim(screen,576,360)
+
                                 deal_damage(player_stats,enemy_obj)
                                 playerTurn = False
                                 update_turn_counters()
@@ -1049,7 +1085,7 @@ def main():
                                     energyDamage+=tempDamage
                             if move.earthValue != 0:
                                 tempDamage = (move.earthValue*player_stats.earthStrength)*1.25-(enemy_obj.defence*enemy_obj.earthDefence)
-                                print(enemy_obj.earthDefence)
+                                # print(enemy_obj.earthDefence)
                                 if tempDamage > 0:
                                     energyDamage+=tempDamage
                             if move.iceValue != 0:
@@ -1162,7 +1198,7 @@ def main():
 
             draw_battle_won_UI()
 
-        clock.tick(30)  
+        clock.tick(FPS)  
 
     pygame.quit()
 
