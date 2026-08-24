@@ -128,7 +128,7 @@ class enemy_battle_container(battle_container):
 
 
 class energy_move():
-    def __init__(self,name,physicalValue,fireValue,iceValue,earthValue,healValue,EPcost):
+    def __init__(self,name,physicalValue,fireValue,iceValue,earthValue,healValue,EPcost,animID):
         self.name = name
         self.physicalValue = physicalValue
         self.fireValue = fireValue
@@ -136,6 +136,7 @@ class energy_move():
         self.iceValue = iceValue
         self.healValue = healValue
         self.EPcost = EPcost
+        self.animID = animID
 
 
 class item():
@@ -160,8 +161,9 @@ def load_energy_moves():
     moves = file.readlines()#
     file.close()
     for i in moves:
-        i = i.split(",")
-        ls.append(energy_move(i[0],int(i[1]),int(i[2]),int(i[3]),int(i[4]),int(i[5]),int(i[6])))
+        i = i[:-1]#remove\n
+        i = i.split(",")#break into a list
+        ls.append(energy_move(i[0],int(i[1]),int(i[2]),int(i[3]),int(i[4]),int(i[5]),int(i[6]),i[7]))
 
     return ls
 

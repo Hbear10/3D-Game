@@ -8,9 +8,9 @@ def spritesheet(img_name,width,height,index=0):
 
 
 class animation():
-    def __init__(self,img_name,width,height,n,scale=1):
+    def __init__(self,img_name,width,height,number_of_frames,scale=1):
         self.frames = []
-        for i in range(n):
+        for i in range(number_of_frames):
             frame = spritesheet(img_name=img_name,width=width,height=height,index=i)
             frame = pygame.transform.scale_by(frame,scale)
             self.frames.append(frame)

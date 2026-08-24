@@ -791,10 +791,10 @@ def check_battle_end():
 
 
 class battleAnimation():
-    def __init__(self,animID="",length=30,x=32,y=32):
+    def __init__(self,animID="",length=30,x=32,y=32,scale=8):
         self.animID = animID
         if animID != "":
-            self.frames = Spritesheet.animation(f"{animID}-Sheet",x,y,10,8).frames
+            self.frames = Spritesheet.animation(f"{animID}-Sheet",x,y,number_of_frames=10,scale=scale).frames
         else:
             self.frames = []
 
@@ -852,6 +852,9 @@ class battleAnimation():
             pygame.time.wait(int(1000/30))#1 frame,      (1000ms/30 frames)ms
 
             c+=1
+
+            screen.blit(pygame.image.load("Assets/saveBattleAnimationBackground.png"),(0,0))
+
         
 
 a = battleAnimation(animID="Fire2Enemy",x=16)
@@ -1093,6 +1096,9 @@ def main():
                                 if tempDamage > 0:
                                     energyDamage+=tempDamage
 
+                            if move.animID != "None":
+                                battleAnimation(f"{move.animID}Player",length=battleAnimTime,x=32,y=16,scale=6).playerMoveAnim(screen,640,360)
+
                             player_stats.hp += move.healValue
                             enemy_obj.hp -= int(energyDamage)
 
@@ -1152,6 +1158,7 @@ def main():
                         if selectedItem.effectType == "Heal":
                             player_stats.hp += selectedItem.potency
                         elif selectedItem.effectType == "Damage":
+                            battleAnimation("Physical1Player",length=battleAnimTime,x=16,y=32).playerMoveAnim(screen,576,360)
                             enemy_obj.hp -= selectedItem.potency
 
 
