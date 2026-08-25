@@ -21,8 +21,6 @@ print("Hello World!")
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
 
 
-
-
 def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")]):
     global map, player_pos
 
@@ -75,10 +73,14 @@ map = [[1,1,1,1,1,1,1,1,1],
        [1,0,"S",0,1],
        [1,0,1,0,tile("Wall",wall_image=wall_image("Blue_Brick.png"))],
        [1,0,0,0,tile("Wall",wall_image=wall_image("SmoothStone.png"))],
+       [1,0,0,0,1,1,1,1,1],
+       [1,0,0,0,"BasicSlime","BasicSlime","BasicSlime","BasicSlime",1],
+       [1,0,"S",0,1,1,1,1,1],
        [1,0,"BasicSlime",0,tile("Wall",wall_image=wall_image("SmoothStone.png")),1,1,1,1],
        [wallTest,0,0,0,0,0,0,0,1],
        [1,0,"W",0,0,0,"KingFireSlime",0,1],#W on this line is just an indicator for me for where the player starts, it doesn't affect any processing
        [1,1,1,1,1,1,1,1,1]]
+
 
 
 for x in range(len(map)):
@@ -91,7 +93,7 @@ for x in range(len(map)):
             map[x][y]=tile("Sprite",spriteInfo=map[x][y])
         elif type(map[x][y])==str:
             map[x][y]=tile("Enemy",spriteInfo=map[x][y])
-            # print(1)
+
 
 # print(type(tile("Wall",wall_image("Smooth_Stone.png"))))
 
@@ -118,6 +120,15 @@ turnOrder = ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 # door = Image.open("Assets/Door.png")
 
 sprites_loaded = {"door" : pygame.image.load("Assets/Door.png").convert_alpha(),"KingFireSlime": pygame.image.load("Assets/KingFireSlime.png").convert_alpha(),"BasicSlime": pygame.image.load("Assets/BasicSlime.png").convert_alpha()}
+
+icons = {"SpeedSyringe": pygame.image.load("Assets/Syringe.png").convert_alpha(),"HeavyPlating": pygame.image.load("Assets/HeavyPlating.png").convert_alpha(),
+         "SpikeyBand": pygame.image.load("Assets/SpikeyBand.png").convert_alpha(),"FireShard": pygame.image.load("Assets/FireShard.png").convert_alpha(),
+         "IceShard": pygame.image.load("Assets/IceShard.png").convert_alpha(),"EarthShard": pygame.image.load("Assets/EarthShard.png").convert_alpha(),
+         "HPUP": pygame.image.load("Assets/Sprite.png").convert_alpha(),"Battery": pygame.image.load("Assets/Battery.png").convert_alpha(),}
+
+
+relics = load_relics()
+randomRelics = []
 
 #UI images
 player_selfie = pygame.image.load("Assets/PlayerSelfie.png").convert_alpha()
@@ -724,11 +735,36 @@ def draw_battle_won_UI():
     pygame.draw.rect(screen,reward_selection_colours[0], pygame.Rect(420,150,440,100),border_radius=10)
     pygame.draw.rect(screen,"#000000", pygame.Rect(422,152,436,96),border_radius=10)
 
+    pygame.draw.rect(screen,"#FFFFFF", pygame.Rect(428,158,84,84),border_radius=2)
+    screen.blit(pygame.transform.scale_by(icons[randomRelics[0].image],5),(430,160))
+
+    draw_text(screen,randomRelics[0].name,"#FFFFFF",525,160,fontSize=36)
+    draw_text(screen,randomRelics[0].description,"#FFFFFF",525,200,fontSize=16)
+    draw_text(screen,randomRelics[0].effectDescription,"#FFFFFF",525,220,fontSize=16)
+
+
+
     pygame.draw.rect(screen,reward_selection_colours[1], pygame.Rect(420,270,440,100),border_radius=10)
     pygame.draw.rect(screen,"#000000", pygame.Rect(422,272,436,96),border_radius=10)
 
+    pygame.draw.rect(screen,"#FFFFFF", pygame.Rect(428,278,84,84),border_radius=2)
+    screen.blit(pygame.transform.scale_by(icons[randomRelics[1].image],5),(430,280))
+
+    draw_text(screen,randomRelics[1].name,"#FFFFFF",525,280,fontSize=36)
+    draw_text(screen,randomRelics[1].description,"#FFFFFF",525,320,fontSize=16)
+    draw_text(screen,randomRelics[1].effectDescription,"#FFFFFF",525,340,fontSize=16)
+
+
+
     pygame.draw.rect(screen,reward_selection_colours[2], pygame.Rect(420,390,440,100),border_radius=10)
     pygame.draw.rect(screen,"#000000", pygame.Rect(422,392,436,96),border_radius=10)
+
+    pygame.draw.rect(screen,"#FFFFFF", pygame.Rect(428,398,84,84),border_radius=2)
+    screen.blit(pygame.transform.scale_by(icons[randomRelics[2].image],5),(430,400))
+
+    draw_text(screen,randomRelics[2].name,"#FFFFFF",525,400,fontSize=36)
+    draw_text(screen,randomRelics[2].description,"#FFFFFF",525,440,fontSize=16)
+    draw_text(screen,randomRelics[2].effectDescription,"#FFFFFF",525,460,fontSize=16)
 
     #:D
     draw_text(screen,f":D","#FFFFFF",640,600,fontSize=24,centre=True)
@@ -781,11 +817,20 @@ def check_over_max_hp():
 
 
 def check_battle_end():
+    global randomRelics
+
     if player_stats.hp <= 0:
         pass
     if enemy_obj.hp <= 0:
+        #End battle and go to battle won menu
         game_state.set_value("Battle-Won")
         # map[int(player_pos[1])][int(player_pos[0])] = 0
+
+        #Choose 3 Random Relics
+        # randomRelics = [random.choice(relics),random.choice(relics),random.choice(relics)]
+        randomRelics = []
+        for _ in range(3):
+            randomRelics.append(random.choice(relics))
         draw_screen()
 
 
@@ -810,7 +855,7 @@ class battleAnimation():
 
         # pygame.draw.rect(surface=surface, color="green", rect=pygame.Rect(c,c,c,c))
 
-        print(self.lengthTime//self.numberOfFrames)
+        # print(self.lengthTime//self.numberOfFrames)
 
         for _ in range(self.lengthTime):
             
@@ -839,7 +884,7 @@ class battleAnimation():
         pygame.image.save(surface,"Assets/saveBattleAnimationBackground.png")
 
         
-        print(self.lengthTime//self.numberOfFrames)
+        # print(self.lengthTime//self.numberOfFrames)
 
 
         for _ in range(self.lengthTime):
@@ -1190,6 +1235,13 @@ def main():
                         game_state.set_value("Moving")
                         draw_screen()
                         pygame.display.flip()
+
+                        # player_stats.relics.append("Speed Syringe")
+                        # player_stats.speed *= 1.1
+
+                        player_stats.relics.append(randomRelics[menu_selected["Battle-Won"]].name)
+                        relic_apply_stat_change(player_stats, randomRelics[menu_selected["Battle-Won"]])
+
                         break
                     if event.key == pygame.K_w or event.key == pygame.K_UP:
                         menu_selected["Battle-Won"] = (menu_selected["Battle-Won"]-1)% 3#cycle up, %3 to go back to the bottom

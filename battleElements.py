@@ -14,6 +14,11 @@ class battle_container():
         self.fireDefence = fireDefence
         self.iceDefence = iceDefence
         self.earthDefence = earthDefence
+
+    #prints out all the attributes of the object
+    #useful for testing
+    def output_stats(self):
+        print(vars(self))
         
 
 class player_battle_container(battle_container):
@@ -152,6 +157,58 @@ class enemy_move():
         self.damageType=damageType
         self.value = value
         self.anim = damageType+str(animNum)+"Enemy"
+
+
+class relic():
+    def __init__(self,name:str, description:str, effectDescription:str,image,stat:str,addVal=0,multVal=1):
+        self.name = name
+        self.description = description
+        self.effectDescription = effectDescription
+        self.image=image
+        self.stat = stat
+        self.addVal = addVal
+        self.multVal = multVal
+
+def load_relics():
+    relicTempList = []
+    relicTempList.append(relic("Spikey Band","This will make your attacks hurt more","(Increases Physical Strength by 10%)","SpikeyBand","physicalStrength",multVal=1.1))
+    relicTempList.append(relic("Heavy Plating","This plating will dull your opponents blows","(Increases Defence by 10%)","HeavyPlating","defence",multVal=1.1))
+    relicTempList.append(relic("Speed Syringe","This special serum will make you move quicker","(Increases speed by 10%)","SpeedSyringe","speed",multVal=1.1))
+    relicTempList.append(relic("Fire Shard","This will imporve your ability to use fire","(Increases fire affinity by 10%)","FireShard","fireAffinity",multVal=1.1))
+    relicTempList.append(relic("Ice Shard","This will imporve your ability to use ice","(Increases ice affinity by 10%)","IceShard","iceAffinity",multVal=1.1))
+    relicTempList.append(relic("Earth Shard","This will imporve your ability to use earth","(Increases earth affinity by 10%)","EarthShard","EarthAffinity",multVal=1.1))
+    relicTempList.append(relic("HP","This will increase your HP","(+10 HP)","HPUP","HP",addVal=10))
+    relicTempList.append(relic("Battery","This will increase your energy capacity","(+5 EP)","Battery","EP",addVal=5))
+
+    return relicTempList
+
+
+def relic_apply_stat_change(playerObject: battle_container,relicObject: relic):
+    stat = relicObject.stat
+    if stat == "physicalStrength":
+        playerObject.physicalStrength = (playerObject.physicalStrength + relicObject.addVal) * relicObject.multVal
+    elif stat == "defence":
+        playerObject.defence = (playerObject.defence + relicObject.addVal) * relicObject.multVal
+    elif stat == "speed":
+        playerObject.speed = (playerObject.speed + relicObject.addVal) * relicObject.multVal
+    elif stat == "fireAffinity":
+        playerObject.fireStrength = (playerObject.fireStrength + relicObject.addVal) * relicObject.multVal
+        playerObject.fireDefence = (playerObject.fireDefence + relicObject.addVal) * relicObject.multVal
+    elif stat == "iceAffinity":
+        playerObject.iceStrength = (playerObject.iceStrength + relicObject.addVal) * relicObject.multVal
+        playerObject.iceDefence = (playerObject.iceDefence + relicObject.addVal) * relicObject.multVal
+    elif stat == "earthAffinity":
+        playerObject.earthStrength = (playerObject.earthStrength + relicObject.addVal) * relicObject.multVal
+        playerObject.earthDefence = (playerObject.earthDefence + relicObject.addVal) * relicObject.multVal
+    elif stat == "HP":
+        playerObject.max_hp = (playerObject.max_hp + relicObject.addVal) * relicObject.multVal
+        playerObject.hp = (playerObject.hp + relicObject.addVal) * relicObject.multVal
+    elif stat == "EP":
+        playerObject.max_ep = (playerObject.max_ep + relicObject.addVal) * relicObject.multVal
+        playerObject.ep = (playerObject.ep + relicObject.addVal) * relicObject.multVal
+
+    playerObject.output_stats()
+    
 
 
 def load_energy_moves():
