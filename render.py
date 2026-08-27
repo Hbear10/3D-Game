@@ -3,6 +3,8 @@
 from PIL import Image
 #move rendering functions into here 
           
+
+#for map tilings
 class wall_image():
     def __init__(self,image_name):
         self.main_image = Image.open("Assets/"+image_name)
@@ -18,6 +20,6 @@ brick = wall_image("Brick.png")
 
 class tile():
     def __init__(self,tileType,wall_image=None,spriteInfo=None):
-        self.tileType=tileType
+        self.tileType=tileType #Wall,Path,Sprite,Enemy
         self.wallImage = wall_image
         self.spriteInfo = spriteInfo

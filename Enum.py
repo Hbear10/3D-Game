@@ -20,7 +20,7 @@ class Enum():
             
 class StateOfGame(Enum):
     def __init__(self, value=None):
-        self.values = ["Moving","Glide","Battle","Battle-Energy","Battle-Item","Battle-Won"]
+        self.values = ["Moving","Glide","Battle","Battle-Energy","Battle-Item","Battle-Won","MoveUp"]
         if value in self.values:
             self.value = value
 
