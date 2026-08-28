@@ -225,14 +225,16 @@ def load_energy_moves():
     return ls
 
 def load_items():
-    ls=[]
+    ls={}
     file=open("Data/items.txt","r")
 
     items_file = file.readlines()
     file.close()
     for i in items_file:
+        #Break up item information
         i = i.split(",")
-        ls.append(item(i[0],i[1],int(i[2])))
+        #Put into dictionary item object, key is the name with the whitespace removed
+        ls[i[0].replace(" ","")]=item(i[0],i[1],int(i[2]))
 
     return ls
 
@@ -244,7 +246,7 @@ def load_enemy_moves():
     file.close()
     for i in items_file:
         i = i.split(",")
-        ls.append(enemy_move(i[0],i[1],int(i[2]),int(i[3]))) 
+        ls.append(enemy_move(i[0],i[1],int(i[2]),int(i[3])))
 
     return ls
 

@@ -14,14 +14,16 @@ from render import *
 print("Hello World!")
 
 
-
+#Load all item objects that are available
+items = load_items()
 
 
 
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
 
 
-def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")], number_of_enemies=0, number_of_campfires=0,number_of_chargers=0,number_of_moveUP=0):
+def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")], number_of_enemies=0, enemies=["BasicSlime"], number_of_campfires=0,number_of_chargers=0,
+             number_of_moveUP=0,number_of_items=0):
     global map, player_pos
 
     map,player_pos = maze.maze_generate(11)
@@ -41,6 +43,10 @@ def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")
             elif map[x][y] == "R":
                 deadEnds.append((x,y))
                 map[x][y] = tile("Path")
+            elif map[x][y] == "W":#The spot the player spawns in
+                map[x][y] = tile("Path")
+                #nothing else so that nothing else will be put here 
+                #e.g. no enemies will be where the player immediately spawns in
             else:
                 paths.append((x,y))
                 map[x][y] = tile("Path")
@@ -53,8 +59,10 @@ def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")
 
     for _ in range(number_of_enemies):
         pointForEnemy = random.choice(paths)
+        Enemy = random.choice(enemies)
         paths.pop(paths.index(pointForEnemy))
-        map[pointForEnemy[0]][pointForEnemy[1]] = tile("Enemy", spriteInfo="BasicSlime")
+        map[pointForEnemy[0]][pointForEnemy[1]] = tile("Enemy", spriteInfo=Enemy)
+
     for _ in range(number_of_campfires):
         pointForFire = random.choice(paths)
         paths.pop(paths.index(pointForFire))
@@ -64,10 +72,16 @@ def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")
         paths.pop(paths.index(pointForFire))
         map[pointForFire[0]][pointForFire[1]] = tile("Sprite", spriteInfo="Charger")
 
+    for _ in range(number_of_items):
+        pointForItem = random.choice(paths)
+        paths.pop(paths.index(pointForItem))
+        map[pointForItem[0]][pointForItem[1]] = tile("Item", spriteInfo=random.choice(list(items.keys())))
+
     for _ in range(number_of_moveUP):
         deadEndPoint = random.choice(deadEnds)
         deadEnds.pop(deadEnds.index(deadEndPoint))
         map[deadEndPoint[0]][deadEndPoint[1]] = tile("Sprite", spriteInfo="VendingMachine")
+
 
     for i in deadEnds:
         map[i[0]][i[1]] == tile("Path")
@@ -97,14 +111,14 @@ FOV = 100 #The field of view of the player, Changing is not recommended as rende
 
 #The traversable map is stored as a 2D array, this is my testing map
 map = [[1,1,1,1,1,1,1,1,1],
-       [1,0,0,0,0,0,0,0,1],
-       [1,0,"S",0,1,1,1,1,1],
-       [1,0,0,0,1],
-       [1,0,"S",0,1],
-       [1,0,0,0,1],
+       [1,tile("Sprite",spriteInfo="Chest"),0,0,0,0,0,0,1],
+       [1,tile("Sprite",spriteInfo="Chest"),"S",0,1,1,1,1,1],
+       [1,tile("Sprite",spriteInfo="Chest"),0,0,1],
+       [1,tile("Sprite",spriteInfo="Chest"),"S",0,1],
+       [1,"FireSpitter",0,0,1],
        [1,0,"S",0,tile("Wall",wall_image=wall_image("Floor1Tile1.png"))],
-       [1,0,1,0,tile("Wall",wall_image=wall_image("Blue_Brick.png"))],
-       [1,0,0,0,tile("Wall",wall_image=wall_image("SmoothStone.png"))],
+       [1,tile("Item",spriteInfo="Bomb"),1,0,tile("Wall",wall_image=wall_image("Blue_Brick.png"))],
+       [1,0,tile("Sprite",spriteInfo="Chest"),0,tile("Wall",wall_image=wall_image("SmoothStone.png"))],
        [1,tile("Sprite", spriteInfo="VendingMachine"),0,0,1,1,1,1,1],
        [1,0,0,0,"BasicSlime","BasicSlime","BasicSlime","BasicSlime",1],
        [1,0,"S",0,1,1,1,1,1],
@@ -154,6 +168,11 @@ turnOrder = ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 sprites_loaded = {"Door" : pygame.image.load("Assets/Door.png").convert_alpha(),"KingFireSlime": pygame.image.load("Assets/KingFireSlime.png").convert_alpha(),"BasicSlime": pygame.image.load("Assets/BasicSlime.png").convert_alpha(),
                   "Campfire": pygame.image.load("Assets/Campfire.png"), "Charger": pygame.image.load("Assets/Charger.png"), "VendingMachine": pygame.image.load("Assets/VendingMachine.png")}
 
+sprites_to_load = ["FireSpitter","IceSpitter","EarthSpitter","JunkBot","Bomb","Potion","SuperPotion","Shuriken","Chest"]
+for i in sprites_to_load:
+    sprites_loaded[i] = pygame.image.load(f"Assets/{i}.png")
+
+
 icons = {"SpeedSyringe": pygame.image.load("Assets/Syringe.png").convert_alpha(),"HeavyPlating": pygame.image.load("Assets/HeavyPlating.png").convert_alpha(),
          "SpikeyBand": pygame.image.load("Assets/SpikeyBand.png").convert_alpha(),"FireShard": pygame.image.load("Assets/FireShard.png").convert_alpha(),
          "IceShard": pygame.image.load("Assets/IceShard.png").convert_alpha(),"EarthShard": pygame.image.load("Assets/EarthShard.png").convert_alpha(),
@@ -180,7 +199,7 @@ pygame.image.save(screen, "Assets/saveBackground.png")
 
 #uses ticks/count timers, +1 per loop for time tracking for animations etc.
 tick_timers = {"Battle":0}
-menu_selected = {"Battle":0, "Battle-Energy":0,"Battle-Item":0,"Battle-Won":0,"MoveUp":0}
+menu_selected = {"Battle":0, "Battle-Energy":0,"Battle-Item":0,"Battle-Won":0,"MoveUp":0,"PopUp":""}
 playerTurn = True
 turnCounter = {"Player":0,"Enemy":0}
 displayInfo = False
@@ -199,10 +218,10 @@ energy_moves = load_energy_moves()
 player_stats.set_energyMoves(energy_moves[0],energy_moves[1],energy_moves[2],energy_moves[3])
 
 
-items = load_items()
-player_stats.add_item(items[0],5)#add 5 potions
-player_stats.add_item(items[1],5)#add 5 super potions
-player_stats.add_item(items[2],5)#add 5 bombs
+
+player_stats.add_item(items["Potion"],5)#add 5 potions
+player_stats.add_item(items["SuperPotion"],5)#add 5 super potions
+player_stats.add_item(items["Bomb"],5)#add 5 bombs
 
 
 enemy_obj = load_enemy("KingFireSlime")
@@ -290,7 +309,7 @@ def raycast_ray(count):
     while not is_blocked:#Until the ray meets a boundary
         degree_angles = math.degrees(angle)#convert angle from radians to degrees as it makes some calculations easier
 
-        if map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Sprite" or map[ray_pos_grid[1]][ray_pos_grid[0]].tileType == "Enemy":#if there are any sprites on the screen that should be rendered
+        if map[ray_pos_grid[1]][ray_pos_grid[0]].tileType in ["Sprite", "Enemy", "Item"]:#if there are any sprites on the screen that should be rendered
             if (ray_pos_grid[0],ray_pos_grid[1]) not in sprites_pos_that_can_be_rendered:
                 #print(degree_angles)
                 sprites_pos_that_can_be_rendered.append( (ray_pos_grid[0],ray_pos_grid[1]) )
@@ -860,6 +879,17 @@ def draw_MoveUp_UI():
     pygame.display.flip()
     
 
+def draw_PopUP_UI():
+    pygame.draw.rect(screen, "brown", pygame.Rect(520,300,240,120))
+    pygame.draw.rect(screen, "#000000", pygame.Rect(522,302,236,116))
+
+    draw_text(screen, "You got:","#FFFFFF",640,324,fontSize=48,centre=True)
+    draw_text(screen, menu_selected["PopUp"], "#FFFFFF",640,370,fontSize=30,centre=True)
+
+
+    pygame.display.flip()
+
+
 #enemy name, hp
 def draw_enemy_stats():
     pygame.draw.rect(screen, color="brown", rect=pygame.Rect(440,90,400,120))
@@ -1035,7 +1065,8 @@ def main():
             if map[int(player_pos[1])][int(player_pos[0])].spriteInfo=="Door":
                 print([[wall_image("Floor1Tile1.png")]*5+[wall_image("Floor1Tile2.png")]+[wall_image("Floor1Tile3.png")]*3])
                 new_maze(wall_tiles=[wall_image("Floor1Tile1.png")]*5+[wall_image("Floor1Tile2.png")]+[wall_image("Floor1Tile3.png")]*3+[wall_image("Floor1Tile4.png")]+[wall_image("Floor1Tile5.png")]*2,
-                         number_of_enemies=5,number_of_campfires=2, number_of_chargers=1, number_of_moveUP=1)
+                         number_of_enemies=10,enemies=["BasicSlime","FireSpitter","IceSpitter","EarthSpitter","JunkBot"],
+                         number_of_campfires=2, number_of_chargers=1, number_of_moveUP=1,number_of_items=4)
                 battleAnimation(length=20,).transitionAnim(screen)
                 draw_screen()
 
@@ -1054,6 +1085,15 @@ def main():
                 draw_screen()
 
                 pygame.image.save(screen, "Assets/saveBackground.png")
+
+            elif map[int(player_pos[1])][int(player_pos[0])].tileType=="Item":
+                print(player_stats.items)
+                if items[map[int(player_pos[1])][int(player_pos[0])].spriteInfo] in player_stats.items:
+                    player_stats.items[items[map[int(player_pos[1])][int(player_pos[0])].spriteInfo]]+=1
+                else:
+                    player_stats.items[items[map[int(player_pos[1])][int(player_pos[0])].spriteInfo]]=1
+                map[int(player_pos[1])][int(player_pos[0])] = tile("Path")
+
                  
             elif map[int(player_pos[1])][int(player_pos[0])].tileType=="Enemy":
                 turnCounter = {"Player":0,"Enemy":0}
@@ -1067,6 +1107,34 @@ def main():
                 draw_screen()
                 
                 pygame.image.save(screen, "Assets/saveBackground.png")
+
+            elif map[int(player_pos[1])][int(player_pos[0])].spriteInfo=="Chest":
+                if random.random() > 0.5:
+                    #Item
+                    randItem = random.choice(list(items.values()))
+                    menu_selected["PopUp"] = f"Item: {randItem.name}"
+
+                    if randItem in player_stats.items:
+                        player_stats.items[randItem]+=1
+                    else:
+                        player_stats.items[randItem]=1
+
+
+                else:
+                    #Relic
+                    randRelic = random.choice(relics)
+                    menu_selected["PopUp"] = f"Relic: {randRelic.name}"
+
+                    player_stats.relics.append(randRelic.name)
+                    relic_apply_stat_change(player_stats, randRelic)
+                    
+
+
+                map[int(player_pos[1])][int(player_pos[0])] = tile("Path")
+                game_state.set_value("PopUp")
+
+                draw_screen()
+                draw_PopUP_UI()
                 
    
         elif game_state.value == "Battle":
@@ -1391,7 +1459,17 @@ def main():
 
 
             draw_MoveUp_UI()
-                
+
+        elif game_state.value == "PopUp":
+            draw_PopUP_UI()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False      
+                else:
+                    game_state.set_value("Moving")
+
+                        
         clock.tick(FPS)  
 
     pygame.quit()

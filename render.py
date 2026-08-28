@@ -20,6 +20,6 @@ brick = wall_image("Brick.png")
 
 class tile():
     def __init__(self,tileType,wall_image=None,spriteInfo=None):
-        self.tileType=tileType #Wall,Path,Sprite,Enemy
+        self.tileType=tileType #Wall,Path,Sprite,Enemy, Item
         self.wallImage = wall_image
         self.spriteInfo = spriteInfo

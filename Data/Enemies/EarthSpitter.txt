@@ -1,0 +1,13 @@
+Earth Spitter
+40
+5
+5
+35
+1
+1
+2
+2
+0.5
+1
+Pebble Throw,0.5
+Slam,0.5

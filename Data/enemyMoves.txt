@@ -2,3 +2,8 @@ Fireball,Fire,20,2
 Fireblast,Fire,50,3
 Stamp,Physical,15,1
 Slam,Physical,25,1
+Ember,Fire,15,1
+Snowball,Ice,15,1
+Pebble Throw,Earth,15,1
+3RR0R,Physical,0,3
+Vacuum Punch,Physical,30,1

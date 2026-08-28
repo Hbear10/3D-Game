@@ -1,0 +1,13 @@
+Ice Spitter
+40
+5
+5
+35
+1
+2
+1
+0.5
+1
+2
+Snowball,0.5
+Slam,0.5
