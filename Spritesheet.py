@@ -1,5 +1,6 @@
 import pygame
 
+#returns on frame of a spritesheet
 def spritesheet(img_name,width,height,index=0):
     sprite_frame = pygame.Surface((width,height),pygame.SRCALPHA) #SRCALPHA makes transparent :D
     sheet = pygame.image.load(f"Assets/{img_name}.png").convert_alpha()
@@ -7,6 +8,7 @@ def spritesheet(img_name,width,height,index=0):
     return sprite_frame
 
 
+#generate frames of an animation
 class animation():
     def __init__(self,img_name,width,height,number_of_frames,scale=1):
         self.frames = []
@@ -16,7 +18,7 @@ class animation():
             self.frames.append(frame)
 
         
-
+#testing
 if __name__ == "__main__":
     print("Hello World!")
 

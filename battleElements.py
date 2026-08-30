@@ -59,16 +59,13 @@ class enemy_battle_container(battle_container):
 
     def make_move(self,opponent):
         randVal = random.random()
-        # print(randVal)
         weightCounter=0
         moveCounter = 0
         while weightCounter < randVal:
             weightCounter += list(self.moves.values())[moveCounter]
             moveCounter+=1
         moveCounter-=1
-        # print(list(self.moves.keys())[moveCounter].name)
         move = list(self.moves.keys())[moveCounter]
-        # print(move)
         damage = 0
         if move.damageType == "Physical":
             damage = int((self.physicalStrength+move.value)*0.75-opponent.defence)
@@ -80,8 +77,7 @@ class enemy_battle_container(battle_container):
             damage = int((self.iceStrength*move.value)*0.75-(opponent.defence*opponent.iceDefence))
         elif move.damageType == "Heal":
             self.hp+=move.potency
-        else:
-            print(move.damageType)
+
 
         damage = damage // opponent.guarding
 
@@ -94,14 +90,14 @@ class enemy_battle_container(battle_container):
     #decompose above
     def choose_move(self):
         randVal = random.random()
-        # print(randVal)
+
         weightCounter=0
         moveCounter = 0
         while weightCounter < randVal:
             weightCounter += list(self.moves.values())[moveCounter]
             moveCounter+=1
         moveCounter-=1
-        # print(list(self.moves.keys())[moveCounter].name)
+
         move = list(self.moves.keys())[moveCounter]
 
         return move
@@ -118,8 +114,6 @@ class enemy_battle_container(battle_container):
             damage = int((self.iceStrength*move.value)*0.75-(opponent.defence*opponent.iceDefence))
         elif move.damageType == "Heal":
             self.hp+=move.potency
-        else:
-            print(move.damageType)
 
         damage = damage // opponent.guarding
 
@@ -133,15 +127,15 @@ class enemy_battle_container(battle_container):
 
 
 class energy_move():
-    def __init__(self,name,physicalValue,fireValue,iceValue,earthValue,healValue,EPcost,animID):
+    def __init__(self,name,fireValue,iceValue,earthValue,healValue,EPcost,animID,level):
         self.name = name
-        self.physicalValue = physicalValue
         self.fireValue = fireValue
         self.earthValue = earthValue
         self.iceValue = iceValue
         self.healValue = healValue
         self.EPcost = EPcost
         self.animID = animID
+        self.level = level
 
 
 class item():
@@ -206,21 +200,24 @@ def relic_apply_stat_change(playerObject: battle_container,relicObject: relic):
     elif stat == "EP":
         playerObject.max_ep = (playerObject.max_ep + relicObject.addVal) * relicObject.multVal
         playerObject.ep = (playerObject.ep + relicObject.addVal) * relicObject.multVal
-
-    playerObject.output_stats()
     
 
 
 def load_energy_moves():
     ls = []
-    file = open("Data/energyMoves.txt","r")
+    # file = open("Data/energyMoves.txt","r")
 
-    moves = file.readlines()#
-    file.close()
-    for i in moves:
-        i = i[:-1]#remove\n
-        i = i.split(",")#break into a list
-        ls.append(energy_move(i[0],int(i[1]),int(i[2]),int(i[3]),int(i[4]),int(i[5]),int(i[6]),i[7]))
+    # moves = file.readlines()#
+    # file.close()
+    # for i in moves:
+    #     i = i[:-1]#remove\n
+    #     i = i.split(",")#break into a list
+    #     ls.append(energy_move(i[0],int(i[1]),int(i[2]),int(i[3]),int(i[4]),int(i[5]),int(i[6]),i[7]))
+
+    ls.append(energy_move("Fire",20,0,0,0,5,"Fire1",1))
+    ls.append(energy_move("Ice",0,20,0,0,5,"Ice1",1))
+    ls.append(energy_move("Earth",0,0,20,0,5,"Earth1",1))
+    ls.append(energy_move("Heal",0,0,0,20,5,"None",1))
 
     return ls
 
@@ -255,7 +252,6 @@ enemy_moves = load_enemy_moves()
 def load_enemy(enemyID):
     file = open(f"Data/Enemies/{enemyID}.txt")
     enemyData = file.readlines()
-    # print(enemyData)
     file.close()
 
     for i in range(len(enemyData)):
