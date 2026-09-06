@@ -1,0 +1,13 @@
+King Ice Slime
+100
+10
+10
+50
+1
+1.5
+1
+0.5
+1
+2
+Iceball,0.7
+Iceblast,0.3

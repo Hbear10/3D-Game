@@ -1,0 +1,13 @@
+King Earth Slime
+100
+10
+10
+50
+1
+1
+1.5
+2
+0.5
+1
+Earthball,0.7
+Earthblast,0.3

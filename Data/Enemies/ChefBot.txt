@@ -1,0 +1,13 @@
+Chef Bot
+75
+12
+10
+40
+1
+1
+1
+0.9
+0.9
+0.9
+Pot Spin,0.5
+Ladel Slash,0.5

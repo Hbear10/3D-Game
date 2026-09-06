@@ -1,0 +1,14 @@
+Chef Bot
+200
+20
+20
+20
+1
+1
+1
+0.7
+0.7
+0.7
+Protection Blast,0.4
+Slash,0.35
+Mega Slash,0.25

@@ -20,7 +20,7 @@ items = load_items()
 
 
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
-floor = 0
+floor = 0 #Counter to track which floor the player is on
 
 #Use function from maze.py to generate a new maze using a backtracking algorithm
 #Then randomly populate walls and maze

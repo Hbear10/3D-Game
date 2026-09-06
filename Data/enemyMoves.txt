@@ -1,5 +1,9 @@
 Fireball,Fire,20,2
 Fireblast,Fire,50,3
+Iceball,Ice,20,2
+Iceblast,Ice,50,3
+Earthball,Earth,20,2
+Earthblast,Earth,50,3
 Stamp,Physical,15,1
 Slam,Physical,25,1
 Ember,Fire,15,1
@@ -7,3 +11,10 @@ Snowball,Ice,15,1
 Pebble Throw,Earth,15,1
 3RR0R,Physical,0,3
 Vacuum Punch,Physical,30,1
+Pot Spin,Physical,35,1
+Ladel Slash,Physical,40,2
+Club,Physical,38,2
+Mafia Slash,Physical,45,2
+Protection Blast,Physical,40,1
+Mega Slash,Physical,60,2
+Slash,Physical,48,2
