@@ -20,15 +20,31 @@ items = load_items()
 
 
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
-
+floor = 0
 
 #Use function from maze.py to generate a new maze using a backtracking algorithm
 #Then randomly populate walls and maze
 def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")], number_of_enemies=0, enemies=["BasicSlime"], number_of_campfires=0,number_of_chargers=0,
              number_of_moveUP=0,number_of_items=0,number_of_chests=0):
-    global map, player_pos
+    global map, player_pos, floor
 
-    map,player_pos = maze.maze_generate(11) # Create maze and set the position of the player
+    floor += 1
+    if floor % 2 == 0:   # Load a boss room every 2nd floor - might change this to every third floor later
+        column = wall_image("Column.png")
+        map=[[tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),  tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Path"),                  tile("Path"),                  tile("Sprite",spriteInfo="Door"),tile("Path"),                  tile("Path"),                  tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Path"),                  tile("Path"),                  tile("Enemy",spriteInfo="KingFireSlime"),tile("Path"),          tile("Path"),                  tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Path"),                    tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Sprite", spriteInfo="Campfire"),                        tile("Sprite", spriteInfo="Charger"),tile("Path"),              tile("Path"),                  tile("Path"),tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Path"),                                                 tile("Path"),                    tile("Path"),                  tile("Path"),tile("Path"),tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Path"),                                                 tile("Path"),                    tile("Path"),                  tile("Path"),tile("Path"),tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Wall",wall_image=column),                               tile("Wall",wall_image=column),  tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column)]]
+        # number_of_campfires,number_of_chargers,number_of_chests,number_of_enemies,number_of_items,number_of_moveUP = 0,0,0,0,0,0
+        player_pos=[3.5,6.5]
+        return
+    else:
+        map,player_pos = maze.maze_generate(11) # Create maze and set the position of the player
+    
 
     #add in random thingies here
     #add some things to the R points
