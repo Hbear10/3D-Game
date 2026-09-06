@@ -1,0 +1,13 @@
+Fire Knight Bot
+170
+15
+15
+35
+1.5
+1
+1
+1
+2
+0.5
+Spear Thrust,0.5
+Fireblast,0.5

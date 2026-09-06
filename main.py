@@ -19,10 +19,10 @@ items = load_items()
 
 boss_sets = {1:["KingFireSlime","KingIceSlime","KingEarthSlime"],
              2:["HeavyKnightBot"],
-             3:["TEMP"]}
+             3:["KingBot"]}
 
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
-floor = 0 #Counter to track which floor the player is on
+floor = 4 #Counter to track which floor the player is on
 
 #Use function from maze.py to generate a new maze using a backtracking algorithm
 #Then randomly populate walls and maze
@@ -134,7 +134,7 @@ maze_wallsets = {1:[wall_image("Floor1Tile1.png")]*5+[wall_image("Floor1Tile2.pn
 
 maze_enemyset = {1:["BasicSlime","FireSpitter","IceSpitter","EarthSpitter","JunkBot"],
                  2:["FireBot","IceBot","EarthBot","ChefBot","GruntBot"],
-                 3:["KingFireSlime"]}
+                 3:["FireKnightBot","IceKnightBot","EarthKnightBot","KnightBot"]}
 
 
 
@@ -198,7 +198,7 @@ sprites_loaded = {"Door" : pygame.image.load("Assets/Door.png").convert_alpha(),
                   "Campfire": pygame.image.load("Assets/Campfire.png"), "Charger": pygame.image.load("Assets/Charger.png"), "VendingMachine": pygame.image.load("Assets/VendingMachine.png")}
 
 sprites_to_load = ["FireSpitter","IceSpitter","EarthSpitter","JunkBot","Bomb","Potion","SuperPotion","Shuriken","Chest","KingIceSlime","KingEarthSlime","FireBot","IceBot","EarthBot","ChefBot",
-                   "GruntBot","HeavyKnightBot"]
+                   "GruntBot","HeavyKnightBot","FireKnightBot","IceKnightBot","EarthKnightBot","KnightBot","KingBot"]
 for i in sprites_to_load:
     sprites_loaded[i] = pygame.image.load(f"Assets/{i}.png")
 

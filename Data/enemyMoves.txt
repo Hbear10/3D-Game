@@ -18,3 +18,4 @@ Mafia Slash,Physical,45,2
 Protection Blast,Physical,40,1
 Mega Slash,Physical,60,2
 Slash,Physical,48,2
+Spear Thrust,Physical,50,1

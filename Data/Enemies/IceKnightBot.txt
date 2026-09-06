@@ -1,0 +1,13 @@
+Ice Knight Bot
+170
+15
+15
+35
+1
+1.5
+1
+0.5
+1
+2
+Spear Thrust,0.5
+Iceblast,0.5

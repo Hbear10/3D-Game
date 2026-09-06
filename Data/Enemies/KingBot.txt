@@ -1,0 +1,15 @@
+King Bot
+500
+30
+25
+40
+1.5
+1.5
+1.5
+1
+1
+1
+Mega Slash,0.25
+Fireblast,0.25
+Iceblast,0.25
+Earthblast,0.25
