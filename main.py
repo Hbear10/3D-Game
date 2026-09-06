@@ -17,7 +17,9 @@ print("Hello World!")
 #Load all item objects that are available
 items = load_items()
 
-
+boss_sets = {1:["KingFireSlime","KingIceSlime","KingEarthSlime"],
+             2:["HeavyKnightBot"],
+             3:["TEMP"]}
 
 player_pos = [2.5,10.5]#The coordinate of the player, (xy)
 floor = 0 #Counter to track which floor the player is on
@@ -31,9 +33,10 @@ def new_maze(wall_tiles = [wall_image("Brick.png"), wall_image("Blue_Brick.png")
     floor += 1
     if floor % 2 == 0:   # Load a boss room every 2nd floor - might change this to every third floor later
         column = wall_image("Column.png")
+        boss=random.choice(boss_sets[floor//2])
         map=[[tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),  tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column)],
              [tile("Wall",wall_image=column),tile("Path"),                  tile("Path"),                  tile("Sprite",spriteInfo="Door"),tile("Path"),                  tile("Path"),                  tile("Wall",wall_image=column)],
-             [tile("Wall",wall_image=column),tile("Path"),                  tile("Path"),                  tile("Enemy",spriteInfo="KingFireSlime"),tile("Path"),          tile("Path"),                  tile("Wall",wall_image=column)],
+             [tile("Wall",wall_image=column),tile("Path"),                  tile("Path"),                  tile("Enemy",spriteInfo=boss),   tile("Path"),                  tile("Path"),                  tile("Wall",wall_image=column)],
              [tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Path"),                    tile("Wall",wall_image=column),tile("Wall",wall_image=column),tile("Wall",wall_image=column)],
              [tile("Wall",wall_image=column),tile("Sprite", spriteInfo="Campfire"),                        tile("Sprite", spriteInfo="Charger"),tile("Path"),              tile("Path"),                  tile("Path"),tile("Wall",wall_image=column)],
              [tile("Wall",wall_image=column),tile("Path"),                                                 tile("Path"),                    tile("Path"),                  tile("Path"),tile("Path"),tile("Wall",wall_image=column)],
@@ -125,6 +128,14 @@ FPS = 30
 battleAnimTime = 10 #has to be a multiple of 10 as animations are 10 frames long so it just won't render if it isnt a multiple of 10, value is how many frames it takes
 FOV = 100 #The field of view of the player, Changing is not recommended as rendering may become buggy especially with sprite rendering
 
+maze_wallsets = {1:[wall_image("Floor1Tile1.png")]*5+[wall_image("Floor1Tile2.png")]+[wall_image("Floor1Tile3.png")]*3+[wall_image("Floor1Tile4.png")]+[wall_image("Floor1Tile5.png")]*2,
+                 2:[wall_image("Floor2Tile1.png")]*5+[wall_image("Floor2Tile2.png")]*4+[wall_image("Floor2Tile3.png")]+[wall_image("Floor2Tile4.png")]*2+[wall_image("Floor2Tile5.png")],
+                 3:[wall_image("Floor3Tile1.png")]*5+[wall_image("Floor3Tile2.png")]+[wall_image("Floor3Tile3.png")]*3+[wall_image("Floor3Tile4.png")]+[wall_image("Floor3Tile5.png")]*2}
+
+maze_enemyset = {1:["BasicSlime","FireSpitter","IceSpitter","EarthSpitter","JunkBot"],
+                 2:["FireBot","IceBot","EarthBot","ChefBot","GruntBot"],
+                 3:["KingFireSlime"]}
+
 
 
 #The traversable map is stored as a 2D array, this is my testing map
@@ -186,7 +197,8 @@ turnOrder = ["#0000FF","#0000FF","#FF0000","#0000FF","#FF0000"]
 sprites_loaded = {"Door" : pygame.image.load("Assets/Door.png").convert_alpha(),"KingFireSlime": pygame.image.load("Assets/KingFireSlime.png").convert_alpha(),"BasicSlime": pygame.image.load("Assets/BasicSlime.png").convert_alpha(),
                   "Campfire": pygame.image.load("Assets/Campfire.png"), "Charger": pygame.image.load("Assets/Charger.png"), "VendingMachine": pygame.image.load("Assets/VendingMachine.png")}
 
-sprites_to_load = ["FireSpitter","IceSpitter","EarthSpitter","JunkBot","Bomb","Potion","SuperPotion","Shuriken","Chest"]
+sprites_to_load = ["FireSpitter","IceSpitter","EarthSpitter","JunkBot","Bomb","Potion","SuperPotion","Shuriken","Chest","KingIceSlime","KingEarthSlime","FireBot","IceBot","EarthBot","ChefBot",
+                   "GruntBot","HeavyKnightBot"]
 for i in sprites_to_load:
     sprites_loaded[i] = pygame.image.load(f"Assets/{i}.png")
 
@@ -1051,9 +1063,8 @@ def main():
 
             #Run into door and generate new maze
             if map[int(player_pos[1])][int(player_pos[0])].spriteInfo=="Door":
-                new_maze(wall_tiles=[wall_image("Floor1Tile1.png")]*5+[wall_image("Floor1Tile2.png")]+[wall_image("Floor1Tile3.png")]*3+[wall_image("Floor1Tile4.png")]+[wall_image("Floor1Tile5.png")]*2,
-                         number_of_enemies=10,enemies=["BasicSlime","FireSpitter","IceSpitter","EarthSpitter","JunkBot"],
-                         number_of_campfires=2, number_of_chargers=1, number_of_moveUP=1,number_of_items=4,number_of_chests=2)
+                new_maze(wall_tiles=maze_wallsets[floor//2+1], number_of_enemies=10, enemies=maze_enemyset[floor//2+1],
+                         number_of_campfires=2, number_of_chargers=1, number_of_moveUP=1, number_of_items=4, number_of_chests=2)
                 battleAnimation(length=20,).transitionAnim(screen)
                 draw_screen()
 
